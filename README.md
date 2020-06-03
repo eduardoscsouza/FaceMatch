@@ -2,7 +2,7 @@
 Final project for **SCC0251/SCC5830 - Image Processing - 1st Semester of 2020** at University of São Paulo.
 
 ## **Abstract**
-This project aims to build a system capable of verifying the presence of someone's face in an image. It will use image segmentation to separate the faces from the rest of the images, and image classification to determine weather the face belongs to a given person. The images used will be photographic images of people showing their faces, mainly from the WIDER and CelebA datasets. Possible application revolve around any problem that needs to verify someone by their face, like many security or survailence systems.
+This project aims to build a system capable of verifying the presence of someone's face in an image, by comparing it to a reference image. It will use image segmentation to separate the faces from the rest of the images, and image classification to determine weather the face belongs to a given person. The images used will be photographic images of people, where their faces are visible, mainly from the WIDER and CelebA datasets. Possible applications revolve around any problem that needs to verify someone by their face, like many security or survailence systems.
 
 ## **Detailed Description**
 This project is aimed at the face verification problem. It is divided in two parts, segmentation and verification.
