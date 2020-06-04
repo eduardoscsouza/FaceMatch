@@ -20,7 +20,7 @@ For the verification, we will attempt to fine-tune a pre-trained network, traine
 
 *Image 1.1 - First Image of Michael Jackson*
 
-![](example_imgs/michael_1_cropped.jpg)
+![](example_imgs/michael_1_cropped.png)
 
 *Image 1.2 - Cropped Image 1.2*
 
@@ -28,7 +28,7 @@ For the verification, we will attempt to fine-tune a pre-trained network, traine
 
 *Image 2.1 - Second Image of Michael Jackson*
 
-![](example_imgs/michael_2_cropped.jpg)
+![](example_imgs/michael_2_cropped.png)
 
 *Image 2.2 - Cropped Image 2.1*
 
@@ -36,7 +36,7 @@ For the verification, we will attempt to fine-tune a pre-trained network, traine
 
 *Image 3.1 - Image of Taylor Swift*
 
-![](example_imgs/taylor_cropped.jpg)
+![](example_imgs/taylor_cropped.png)
 
 *Image 3.2 - Cropped Image 3.1*
 
