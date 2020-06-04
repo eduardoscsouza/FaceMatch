@@ -18,15 +18,27 @@ For the verification, we will attempt to fine-tune a pre-trained network, traine
 ## **Example Images**
 ![](example_imgs/michael_1.jpg)
 
-*Image 1 - First Image of Michael Jackson*
+*Image 1.1 - First Image of Michael Jackson*
+
+![](example_imgs/michael_1_cropped.jpg)
+
+*Image 1.2 - Cropped Image 1.2*
 
 ![](example_imgs/michael_2.jpg)
 
-*Image 2 - Second Image of Michael Jackson*
+*Image 2.1 - Second Image of Michael Jackson*
+
+![](example_imgs/michael_2_cropped.jpg)
+
+*Image 2.2 - Cropped Image 2.1*
 
 ![](example_imgs/taylor.jpg)
 
-*Image 3 - Image of Taylor Swift*
+*Image 3.1 - Image of Taylor Swift*
+
+![](example_imgs/taylor_cropped.jpg)
+
+*Image 3.2 - Cropped Image 3.1*
 
 The system built by this project should, in all images, be able to crop the faces out of them, and then identify the first and the second as belonging to the same person, and the third to a different person.
 
