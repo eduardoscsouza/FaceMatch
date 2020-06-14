@@ -6,7 +6,7 @@ import os
 
 
 def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=False):
-    df = pd.read_csv(bboxs_txt, engine="python", sep='\ +', skiprows=1, index_col=0, dtype={0:str, 1:np.int32, 2:np.int32, 3:np.int32, 4:np.int32}, nrows=100)
+    df = pd.read_csv(bboxs_txt, engine="python", sep='\ +', skiprows=1, index_col=0, dtype={0:str, 1:np.int32, 2:np.int32, 3:np.int32, 4:np.int32})
 
     imgs_shapes = [imageio.imread(os.path.join(imgs_dir, img)).shape for img in df.index]
     heights, widths = np.asarray([shape[0] for shape in imgs_shapes]), np.asarray([shape[1] for shape in imgs_shapes])
@@ -22,6 +22,8 @@ def get_bboxs_df(bboxs_csv):
 
 
 if __name__ == "__main__":
+    gen_bboxs_csv("../CelebA/Anno/list_bbox_celeba.txt", "../CelebA/Img/", "../data/labels/bboxs.csv")
+    '''
     os.makedirs("temp/or/", exist_ok=True)
     os.makedirs("temp/crop/", exist_ok=True)
 
@@ -41,3 +43,4 @@ if __name__ == "__main__":
 
         imageio.imwrite("temp/or/{}".format(df_index), l_img)
         imageio.imwrite("temp/crop/{}".format(df_index), cut)
+    '''
