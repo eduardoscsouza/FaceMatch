@@ -98,17 +98,17 @@ With the feature vector extracted, a threshold applied to either the euclidian o
 
 
 ## **Initial Code and Results**
-As of the writting of this report, we have mostly focous on a code base for later use, and processing and organizing the dataset. The code is located on [src](./src/), and the processed data on [data](./data/) and on [Google Drive](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
+As of the writing of this report, we have mostly focused on a codebase for later usage, and processing and organizing the dataset. The code is located on [src](./src/), and the processed data on [data](./data/) and on [Google Drive](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
 
-However we do have some initial results. We ran a basic CNN model, with no hyper parameter optimization and no data augmentation or enhancement. We obtained the following results during training. The orange line is the training metrics, and the blue one the validation metric.
+However, we do have some initial results. We ran a basic CNN model, with no hyperparameter optimization, no data augmentation, and no image preprocessing. We obtained the following results during training. The orange line is the training metric, and the blue one the validation metric.
 
 <img src="sample_code/basic_cnn/epoch_loss.svg" height="350"></img>
 
-*Image 4.1 - Mean Squared Error of bounding box location through training*
+*Image 4.1 - Mean Squared Error of bounding box location throughout training*
 
 <img src="sample_code/basic_cnn/epoch_mean_absolute_error.svg" height="350"></img>
 
-*Image 4.2 - Mean Absolute Error of bounding box location through training*
+*Image 4.2 - Mean Absolute Error of bounding box location throughout training*
 
 The resulting model was used to crop 100 images for visualization. Those are stored in [sample_imgs/segmented/pred](./sample_imgs/segmented/pred/), and we use did the same using the annotation data, and stored in [sample_imgs/segmented/true](./sample_imgs/segmented/true/). The resulting crops don't seem as precise as is expected from the metrics, so we will analize what may be occuring.
 
