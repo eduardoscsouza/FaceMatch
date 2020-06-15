@@ -3,7 +3,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoa
 
 
 def train_model(model, train_datagen, val_datagen,
-                epochs=200, steps_per_epoch=1000, validation_steps=50, early_stop_patience=40,
+                epochs=1000, steps_per_epoch=200, validation_steps=100, early_stop_patience=80,
                 tensorboard_logdir="logs", best_model_filepath="best_model.h5",
                 earlystop_metric="loss", checkpoint_metric="val_mean_absolute_error"):
     tensorboard = TensorBoard(log_dir=tensorboard_logdir,
@@ -16,7 +16,7 @@ def train_model(model, train_datagen, val_datagen,
                             embeddings_metadata=None)
 
     early_stop = EarlyStopping(monitor=earlystop_metric,
-                            min_delta=0.005,
+                            min_delta=0.001,
                             patience=early_stop_patience,
                             verbose=True,
                             mode='auto',
@@ -34,7 +34,7 @@ def train_model(model, train_datagen, val_datagen,
     model.fit(train_datagen,
             epochs=epochs,
             steps_per_epoch=steps_per_epoch,
-            verbose=True,
+            verbose=False,
             callbacks=[tensorboard, early_stop, checkpoint],
             validation_data=val_datagen,
             validation_steps=validation_steps,

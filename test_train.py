@@ -25,6 +25,7 @@ from src.data_generators import *
 from src.model_builders import *
 
 
+
 train_df, val_df, _ = get_train_val_test_dfs("data/bboxs.csv", "data/splits.csv")
 train_datagen, val_datagen = get_bboxs_generator(train_df, imgs_dir="data/Img_Resize/"), get_bboxs_generator(val_df, imgs_dir="data/Img_Resize/")
 
