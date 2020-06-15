@@ -15,20 +15,22 @@ This project aims to build a system capable of, given two images, determine if b
 
 
 ## **Main Objective**
-As stated in the abstract, our objective is to create a system capable of verifying if the 2 images of people have the face of the same person in them or not. Therefore the main objective can be broken down into two parts:
+As stated in the abstract, our objective is to create a system capable of verifying if the 2 images of people have the face of the same person in them. Therefore the main objective can be broken down into two parts:
 
-1. A Segmentation Algorithm: Given a single image, crop out the location of the face in it. We will limit our scope to only one face per image.
+1. A Segmentation Algorithm: Given a single image, crop out the location of the face in it.
 2. A Verification Algorithm: Given two already segmented faces, determine if they belong to the same person or not.
+
+We will limit our scope to only one face per image, and only photographic images.
 
 
 
 ## **Data Used**
 To achieve or goals, we will need large and varied datasets with two important characteristics:
 
-1. Annotation of bounding boxes of the face present in the image. As stated before, we will work with only a single face per image.
+1. Annotation of the bounding box of the face present in the image.
 2. Annotation of the identity of the person present in the image.
 
-The [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset has both those characteristics, and is also extremely large, having 202,599 images. There are two versions of it, one with the raw image, the other with the face already mostly cropped. We will use the raw version, and initially intend to use it exclusevely.
+The [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset has both those characteristics, and is also extremely large, having 202,599 images. There are two versions of it, one with the raw image, the other with the face already mostly cropped. We will use the raw version, and initially intend to use it exclusevely. All the images are photographs of celebrities, in a variety of conditions.
 
 However there are other possibly useful datasets. We curently don't intend to use them, but we may later. They are:
 
