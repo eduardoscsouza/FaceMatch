@@ -97,10 +97,12 @@ With the feature vector extracted, a threshold applied to either the euclidian o
 
 
 ## **Initial Code and Results**
-As of the writting of this report, we have mostly focous on a code base for later use, and processing and organizing the dataset. The code is located on [src](), and the processed data on [data]() and on [Google Drive](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
+As of the writting of this report, we have mostly focous on a code base for later use, and processing and organizing the dataset. The code is located on [src](./src/), and the processed data on [data](./data/) and on [Google Drive](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
 
 However we do have some initial results.
 
 
+
+---
 
 **Keywords:** Image Segmentation; Feature Learning; Deep Learning; Faces; Face Verification; Triplet Loss;
