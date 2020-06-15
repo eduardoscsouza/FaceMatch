@@ -15,7 +15,7 @@ This project aims to build a system capable of, given two images, determine if b
 
 
 ## **Main Objective**
-As stated in the abstract, our objective is to create a system capable of verifying if the 2 images of people have the face of the same perosn in them or not. Therefore the main objective can be broken down into two parts:
+As stated in the abstract, our objective is to create a system capable of verifying if the 2 images of people have the face of the same person in them or not. Therefore the main objective can be broken down into two parts:
 
 1. A Segmentation Algorithm: Given a single image, crop out the location of the face in it. We will limit our scope to only one face per image.
 2. A Verification Algorithm: Given two already segmented faces, determine if they belong to the same person or not.
@@ -75,7 +75,7 @@ We added part of data used to this GitHub repository, and the rest to a [Google 
 ## **Planned Steps**
 To achieve our goals, we plan to take the following steps:
 
-### **1. Dataset Filtering and Preprocessing **
+### **1. Dataset Filtering and Preprocessing**
 We will reorganize and reformat the original dataset to better suit our needs and improve usability. Importantly, for the face verification, we will only use individuals with more than 5 images of them in the dataset.
 
 ### **2. Image Preprocessing**
@@ -84,7 +84,7 @@ We will, firstly, resize the image to a more manageble and constant size for our
 Also, we will test changes to the color domain of our images, to see wether that has a positive effect on the results. We will test the Grayscale, RGB and possibly the HSL domains.
 Lastly, we intend to use manual edge detection algorithms, such as the Canny Edge Detector, to see if they improve our results.
 
-### **3. Face Segmentation*
+### **3. Face Segmentation**
 After preprocessing, we will input the resulting image to a bounding box detection algorithm to segment the face from the rest of image. We will compare traditional methods to a *CNN* based method that we will implement, both in terms of speed and accuracy. We will test Depth-Wise Separable Convolutions to reduce computational costs.
 
 ### **4. Face Feature Vector Generation**
@@ -93,6 +93,13 @@ To achieve this, we will use a pre-trained VGG16 network, trained on a different
 
 ### **5. Face Verification**
 With the feature vector extracted, a threshold applied to either the euclidian or cossine distance of 2 vectors should be enough to verify the individual.
+
+
+
+## **Initial Code and Results**
+As of the writting of this report, we have mostly focous on a code base for later use, and processing and organizing the dataset. The code is located on [src](), and the processed data on [data]() and on [Google Drive](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
+
+However we do have some initial results.
 
 
 
