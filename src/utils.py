@@ -24,7 +24,7 @@ def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=
     if return_df:
         return df
 
-def get_splits_csv(splits_txt, splits_csv_outfile="splits.csv", return_df=False):
+def gen_splits_csv(splits_txt, splits_csv_outfile="splits.csv", return_df=False):
     df = pd.read_csv(splits_txt, sep=' ', index_col=0, names=["image_id", "split"], dtype={0:str, 1:np.int32})
 
     splits_names = {0:"train", 1:"val", 2:"test"}
@@ -34,12 +34,21 @@ def get_splits_csv(splits_txt, splits_csv_outfile="splits.csv", return_df=False)
     if return_df:
         return df
 
-def get_indvs_csv(indvs_txt, indvs_csv_outfile="indvs.csv", return_df=False):
+def gen_indvs_csv(indvs_txt, indvs_csv_outfile="indvs.csv", return_df=False):
     df = pd.read_csv(indvs_txt, sep=' ', index_col=0, names=["image_id", "indv_id"], dtype={0:str, 1:np.int32})
 
     df.to_csv(indvs_csv_outfile)
     if return_df:
         return df
+
+def get_train_val_test_dfs(bboxs_csv, splits_csv):
+    bboxs_df = pd.read_csv(bboxs_csv)
+    splits_df = pd.read_csv(splits_csv)
+
+    splits = splits_df["split"]
+    train_df, val_df, test_df = bboxs_df[splits=="train"], bboxs_df[splits=="val"], bboxs_df[splits=="test"]
+
+    return train_df, val_df, test_df
 
 
 
