@@ -101,15 +101,19 @@ As of the writting of this report, we have mostly focous on a code base for late
 
 However we do have some initial results. We ran a basic CNN model, with no hyper parameter optimization and no data augmentation or enhancement. We obtained the following results during training. The orange line is the training metrics, and the blue one the validation metric.
 
-<img src="sample_code/basic_cnn/epoch_loss.svg" width="700" height="250"></img>
+<img src="sample_code/basic_cnn/epoch_loss.svg" height="350"></img>
 
 *Image 4.1 - Mean Squared Error of bounding box location through training*
 
-<img src="sample_code/basic_cnn/epoch_mean_absolute_error.svg" width="700" height="250"></img>
+<img src="sample_code/basic_cnn/epoch_mean_absolute_error.svg" height="350"></img>
 
 *Image 4.2 - Mean Absolute Error of bounding box location through training*
 
 The resulting model was used to crop 100 images for visualization. Those are stored in [sample_imgs/segmented/pred](./sample_imgs/segmented/pred/), and we use did the same using the annotation data, and stored in [sample_imgs/segmented/true](./sample_imgs/segmented/true/). The resulting crops don't seem as precise as is expected from the metrics, so we will analize what may be occuring.
+
+We also developed a notebook with the baseline face detection algorithm, located at [sample_code/FaceDetectionCV](./sample_code/FaceDetectionCV.ipynb).
+
+Finally, we implemented the canny edges detector, with a sample notebook at [sample_code/CannyEdgeExample](./sample_code/CannyEdgeExample.ipynb)
 
 
 
