@@ -14,6 +14,9 @@ for gpu in gpus:
 
 #########################
 
+import sys
+sys.path.append("../../")
+
 from src.model_builders import *
 
 import numpy as np

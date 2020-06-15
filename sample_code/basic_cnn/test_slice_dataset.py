@@ -14,6 +14,9 @@ for gpu in gpus:
 
 #########################
 
+import sys
+sys.path.append("../../")
+
 from src.model_builders import *
 
 import numpy as np
@@ -23,13 +26,13 @@ import os
 
 
 
-df = pd.read_csv("data/bboxs.csv").iloc[:100]
+df = pd.read_csv("../../data/bboxs.csv").iloc[:100]
 model = build_bbox_model()
 model.load_weights("best_model.h5")
 
-in_dir = "data/Img"
-true_out_dir = "sample_cuts/true"
-pred_out_dir = "sample_cuts/pred"
+in_dir = "../../data/Img"
+true_out_dir = "../../sample_imgs/segmented/true"
+pred_out_dir = "../../sample_imgs/segmented/pred"
 os.makedirs(true_out_dir, exist_ok=True)
 os.makedirs(pred_out_dir, exist_ok=True)
 for _, row in df.iterrows():
