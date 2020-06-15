@@ -1,14 +1,21 @@
+from multiprocessing import Pool
+from glob import glob
 import numpy as np
 import pandas as pd
-import imageio
 import os
+import cv2
 
 
 
-def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=False):
+def __get_shape__(img_filename):
+    return cv2.imread(img_filename, cv2.IMREAD_COLOR).shape
+
+def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=False, n_procs=16):
     df = pd.read_csv(bboxs_txt, engine="python", sep='\ +', skiprows=1, index_col=0, dtype={0:str, 1:np.int32, 2:np.int32, 3:np.int32, 4:np.int32})
 
-    imgs_shapes = [imageio.imread(os.path.join(imgs_dir, img)).shape for img in df.index]
+    with Pool(n_procs) as pool:
+        imgs_shapes = pool.map(__get_shape__, [os.path.join(imgs_dir, img) for img in df.index])
+
     heights, widths = np.asarray([shape[0] for shape in imgs_shapes]), np.asarray([shape[1] for shape in imgs_shapes])
     df["y_1"], df["height"] = df["y_1"] / heights, df["height"] / heights
     df["x_1"], df["width"] = df["x_1"] / widths, df["width"] / widths
@@ -17,30 +24,43 @@ def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=
     if return_df:
         return df
 
-def get_bboxs_df(bboxs_csv):
-    return pd.read_csv("bboxs.csv", index_col=0)
+def get_splits_csv(splits_txt, splits_csv_outfile="splits.csv", return_df=False):
+    df = pd.read_csv(splits_txt, sep=' ', index_col=0, names=["image_id", "split"], dtype={0:str, 1:np.int32})
+
+    splits_names = {0:"train", 1:"val", 2:"test"}
+    df["split"] = [splits_names[split] for split in df["split"]]
+
+    df.to_csv(splits_csv_outfile)
+    if return_df:
+        return df
+
+def get_indvs_csv(indvs_txt, indvs_csv_outfile="indvs.csv", return_df=False):
+    df = pd.read_csv(indvs_txt, sep=' ', index_col=0, names=["image_id", "indv_id"], dtype={0:str, 1:np.int32})
+
+    df.to_csv(indvs_csv_outfile)
+    if return_df:
+        return df
 
 
-if __name__ == "__main__":
-    gen_bboxs_csv("../CelebA/Anno/list_bbox_celeba.txt", "../CelebA/Img/", "../data/labels/bboxs.csv")
-    '''
-    os.makedirs("temp/or/", exist_ok=True)
-    os.makedirs("temp/crop/", exist_ok=True)
 
-    gen_bboxs_csv("../CelebA/Anno/list_bbox_celeba.txt", "../CelebA/Img/", return_df=True)
-    df = get_bboxs_df("bboxs.csv")
-    for df_index, df_row in df.iterrows():
-        l_img = imageio.imread(os.path.join("../CelebA/Img/", df_index))
+def __standardize_img__(img_filename, out_dir, out_size):
+    img = cv2.imread(img_filename, cv2.IMREAD_COLOR)
+    img = cv2.resize(img, out_size, interpolation=cv2.INTER_CUBIC)
 
-        df_row = df_row.values
-        df_row[[0, 2]] *= l_img.shape[1]
-        df_row[[1, 3]] *= l_img.shape[0]
+    out_name = '.'.join(img_filename.split('/')[-1].split('.')[:-1]) + ".jpg"
+    cv2.imwrite(os.path.join(out_dir, out_name), img, [cv2.IMWRITE_JPEG_QUALITY, 95])
 
-        sli_i = slice(int(df_row[1]), int(df_row[1]+df_row[3]))
-        sli_j = slice(int(df_row[0]), int(df_row[0]+df_row[2]))
-        cut = l_img[sli_i, sli_j]
-        print(cut.shape)
+def standardize_imgs_files(imgs_dir, out_dir, out_size=(224, 224), n_procs=16):
+    os.makedirs(out_dir, exist_ok=True)
 
-        imageio.imwrite("temp/or/{}".format(df_index), l_img)
-        imageio.imwrite("temp/crop/{}".format(df_index), cut)
-    '''
+    imgs = sorted(glob(os.path.join(imgs_dir, "*.jpg")))
+    with Pool(n_procs) as pool:
+        _ = pool.starmap(__standardize_img__, [(img, out_dir, out_size) for img in imgs])
+
+
+
+if __name__ == '__main__':
+    gen_bboxs_csv("../CelebA/Anno/list_bbox_celeba.txt", "../data/Img/")
+    get_splits_csv("../CelebA/Eval/list_eval_partition.txt")
+    get_indvs_csv("../CelebA/Anno/identity_CelebA.txt")
+    standardize_imgs_files("../data/Img/", "./temp/")

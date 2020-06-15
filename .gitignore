@@ -7,7 +7,9 @@
 *.h5
 
 ### Dataset Files ###
-CelebA
+data/Img
+data/Img_Align
+data/Img_Resize
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
