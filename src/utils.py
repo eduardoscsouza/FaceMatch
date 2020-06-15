@@ -68,8 +68,7 @@ def standardize_imgs_files(imgs_dir, out_dir, out_size=(224, 224), n_procs=16):
 
 
 
-if __name__ == '__main__':
-    gen_bboxs_csv("../CelebA/Anno/list_bbox_celeba.txt", "../data/Img/")
-    get_splits_csv("../CelebA/Eval/list_eval_partition.txt")
-    get_indvs_csv("../CelebA/Anno/identity_CelebA.txt")
-    standardize_imgs_files("../data/Img/", "./temp/")
+# Normalizes image from 0 to 255 and make the values integer
+def normalize(image):
+    image_t = ((image - np.min(image)) * 255 / (np.max(image) - np.min(image))).astype(np.uint8)
+    return image_t
