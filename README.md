@@ -113,11 +113,43 @@ However, we do have some initial results. We ran a basic CNN model, with no hype
 
 *Image 4.2 - Mean Absolute Error of bounding box location throughout training*
 
-The resulting model was used to crop 100 images for visualization. Those are stored in [sample_imgs/segmented/pred](./sample_imgs/segmented/pred/), and we use did the same using the annotation data, and stored in [sample_imgs/segmented/true](./sample_imgs/segmented/true/). The resulting crops don't seem as precise as is expected from the metrics, so we will analize what may be occuring.
+The resulting model was used to crop 100 images for visualization. Those are stored in [sample_imgs/segmented/pred](./sample_imgs/segmented/pred/). We did the same process for comparison using the annotation data, and stored in [sample_imgs/segmented/true](./sample_imgs/segmented/true/). The resulting crops don't seem as precise as is expected from the metrics, so we will analize what may be occuring.
+
+<img src="sample_imgs/segmented/pred/000044.jpg" width="250" height="250"></img>
+
+*Image 5.1 - An instance where the model had a very good result*
+
+<img src="sample_imgs/segmented/true/000044.jpg" width="250" height="250"></img>
+
+*Image 5.2 - Ground Truth for Image 5.1*
+
+<img src="sample_imgs/segmented/pred/000040.jpg" width="250" height="250"></img>
+
+*Image 6.1 - An instance where the model had bad but not terrible results. Most cases are like this*
+
+<img src="sample_imgs/segmented/true/000040.jpg" width="250" height="250"></img>
+
+*Image 6.2 - Ground Truth for Image 6.1*
+
+<img src="sample_imgs/segmented/pred/000094.jpg" width="250" height="250"></img>
+
+*Image 7.1 - An instance where the model had terrible results*
+
+<img src="sample_imgs/segmented/true/000094.jpg" width="250" height="250"></img>
+
+*Image 7.2 - Ground Truth for Image 6.1*
 
 We also developed a notebook with the baseline face detection algorithm, located at [sample_code/FaceDetectionCV](./sample_code/FaceDetectionCV.ipynb).
 
+<img src="sample_imgs/cascade_sample.png" width="250" height="250"></img>
+
+*Image 8 - Baseline Face Detection Sample*
+
 Finally, we implemented the canny edges detector, with a sample notebook at [sample_code/CannyEdgeExample](./sample_code/CannyEdgeExample.ipynb)
+
+<img src="sample_imgs/canny_sample.png" width="250" height="250"></img>
+
+*Image 9 - Canny Edge Detection Sample*
 
 
 
