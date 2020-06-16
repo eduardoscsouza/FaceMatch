@@ -82,8 +82,11 @@ We will reorganize and reformat the original dataset to better suit our needs an
 
 ### **2. Image Preprocessing**
 We plan to apply image processing techniques to facilitate the segmentation process.
+
 We will, firstly, resize the image to a more manageable and constant size for our algorithms. We are going to use the Bicubic Interpolation to preserve the details.
+
 Also, we will test changes to the color domain of our images, to see whether that has a positive effect on the results. We will test the Grayscale, RGB, and possibly the HSL domains.
+
 Lastly, we intend to use manual edge detection algorithms, such as the Canny Edge Detector, to see if they improve our results.
 
 ### **3. Face Segmentation**
