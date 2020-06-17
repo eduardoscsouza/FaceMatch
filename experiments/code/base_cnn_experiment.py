@@ -39,11 +39,14 @@ data_dir = "../../data/"
 results_dir = "../results/"
 tensorboard_dir = "../tensorboard_logs/"
 
+bboxs_csv = os.path.join(data_dir, "bboxs.csv")
+splits_csv = os.path.join(data_dir, "splits.csv")
+imgs_dir = os.path.join(data_dir, "Img_Resize/")
+
+train_df, val_df, _ = get_train_val_test_dfs(bboxs_csv, splits_csv)
+train_datagen = get_bboxs_generator(train_df, imgs_dir=imgs_dir)
+val_datagen = get_bboxs_generator(val_df, imgs_dir=imgs_dir)
+
 model = build_bbox_model()
-
-train_df, val_df, _ = get_train_val_test_dfs(os.path.join(data_dir, "bboxs.csv"), os.path.join(data_dir, "splits.csv"))
-train_datagen = get_bboxs_generator(train_df, imgs_dir=os.path.join(data_dir, "Img_Resize/"))
-val_datagen = get_bboxs_generator(val_df, imgs_dir=os.path.join(data_dir, "Img_Resize/"))
-
 run_experiment(model, exp_name, train_datagen, val_datagen,
             results_dir=results_dir, tensorboard_logdir=tensorboard_dir)
