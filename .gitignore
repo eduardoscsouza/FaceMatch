@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,visualstudiocode
+# Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,linux
+# Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,visualstudiocode,linux
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
@@ -14,6 +14,21 @@ ipython_config.py
 
 # Remove previous ipynb_checkpoints
 #   git rm -r .ipynb_checkpoints/
+
+### Linux ###
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -158,7 +173,7 @@ dmypy.json
 # Ignore all local history of files
 .history
 
-# End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode
+# End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,linux
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
@@ -169,6 +184,10 @@ dmypy.json
 data/Img
 data/Img_Align
 data/Img_Resize
+
+### VisualStudioCode ###
+# What was in the template wasn't enogh
+*.vscode/*
 
 .DS_Store
 data/shape_predictor_68_face_landmarks.dat
