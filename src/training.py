@@ -59,7 +59,7 @@ def evaluate_model(model, datagen, evaluation_steps=2000):
                     use_multiprocessing=False,
                     verbose=False)
 
-    return model.evaluate_generator(datagen, **eval_args)
+    return model.evaluate(datagen, **eval_args)
 
 def get_evaluation_df(model, eval_metrics):
     metrics_cols = [' '.join([word.capitalize() for word in metric.split('_')]) for metric in model.metrics_names]
@@ -78,7 +78,7 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
                 tensorboard_logdir="../experiments/tensorboard_logs",
                 best_model_metric="val_mean_absolute_error",
                 earlystop_metric="loss", earlystop_min_delta=0.001, early_stop_patience=80,
-                evaluation_steps=2000)
+                evaluation_steps=2000):
 
     tensorboard_logdir = os.path.join(tensorboard_logdir, exp_name)
     outfiles_dir = os.path.join(results_dir, exp_name)

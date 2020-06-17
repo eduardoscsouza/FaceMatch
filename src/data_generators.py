@@ -34,7 +34,7 @@ def get_bboxs_generator(bboxs_df, imgs_dir="../data/Img_Resize", batch_size=32,
     if flow_args is None:
         flow_args = dict(directory=imgs_dir,
                         x_col="image_id",
-                        y_col=["x_1", "y_1", "width", "height"],
+                        y_col=list(bboxs_df.columns[1:]),
                         weight_col=None,
                         target_size=out_image_size,
                         color_mode=color,
