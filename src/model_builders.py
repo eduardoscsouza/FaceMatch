@@ -3,14 +3,15 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, Input, MaxPooling2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
-from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.optimizers import Adam
 
 
 
 def build_bbox_model(input_size=(56, 56, 3),
                     n_conv_blocks=3, base_conv_n_filters=16,
                     n_dense_layers=2, dense_size=256, dropout_rate=0.25,
-                    loss=MeanSquaredError(), optimizer=Adam()):
+                    loss=MeanSquaredError(), optimizer=Adam(),
+                    metrics=[MeanAbsoluteError()]):
     model_in = Input(shape=input_size)
 
     model = model_in
@@ -26,7 +27,6 @@ def build_bbox_model(input_size=(56, 56, 3),
 
     model_out = Dense(4, activation='sigmoid', name="output")(model)
     model = Model(model_in, model_out)
-    model.compile(loss=loss, optimizer=optimizer,
-                metrics=[MeanAbsoluteError()])
+    model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
     return model
