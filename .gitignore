@@ -1,15 +1,5 @@
-# File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-
-# Created by https://www.gitignore.io/api/visualstudiocode,linux,jupyternotebooks,python
-# Edit at https://www.gitignore.io/?templates=visualstudiocode,linux,jupyternotebooks,python
-
-### Trained Model Files ###
-*.h5
-
-### Dataset Files ###
-data/Img
-data/Img_Align
-data/Img_Resize
+# Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,visualstudiocode
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
@@ -24,21 +14,6 @@ ipython_config.py
 
 # Remove previous ipynb_checkpoints
 #   git rm -r .ipynb_checkpoints/
-
-### Linux ###
-*~
-
-# temporary files which can be created if a process still has a handle open of a deleted file
-.fuse_hidden*
-
-# KDE directory preferences
-.directory
-
-# Linux trash folder which might appear on any partition or disk
-.Trash-*
-
-# .nfs files are created when an open file is removed but is still being accessed
-.nfs*
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -90,12 +65,23 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+*.py,cover
 .hypothesis/
 .pytest_cache/
 
 # Translations
 *.mo
 *.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
 
 # Scrapy stuff:
 .scrapy
@@ -105,6 +91,10 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Jupyter Notebook
+
+# IPython
 
 # pyenv
 .python-version
@@ -116,11 +106,24 @@ target/
 #   install all needed dependencies.
 #Pipfile.lock
 
-# celery beat schedule file
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
 celerybeat-schedule
+celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Spyder project settings
 .spyderproject
@@ -128,11 +131,6 @@ celerybeat-schedule
 
 # Rope project settings
 .ropeproject
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
 
 # mkdocs documentation
 /site
@@ -145,20 +143,32 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# pytype static type analyzer
+.pytype/
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+*.code-workspace
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
 
-# End of https://www.gitignore.io/api/visualstudiocode,linux,jupyternotebooks,python
+# End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+
+### Trained Model Files ###
+*.h5
+
+### Dataset Files ###
+data/Img
+data/Img_Align
+data/Img_Resize
+
 .DS_Store
 data/shape_predictor_68_face_landmarks.dat
-
