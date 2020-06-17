@@ -2,8 +2,41 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, Input, MaxPooling2D
 from tensorflow.keras.losses import MeanSquaredError
-from tensorflow.keras.metrics import MeanAbsoluteError
+from tensorflow.keras.metrics import MeanMetricWrapper, MeanAbsoluteError
 from tensorflow.keras.optimizers import Adam
+
+
+
+def __stateless_x2y2_bbox_iou__(y_true, y_pred):
+    inter_left = tf.max(y_true[:, 0], y_pred[:, 0])
+    inter_right = tf.min(y_true[:, 2], y_pred[:, 2])
+    inter_top = tf.max(y_true[:, 1], y_pred[:, 1])
+    inter_bottom = tf.min(y_true[:, 3], y_pred[:, 3])
+
+    zeros = tf.zeros(shape=(y_true.shape[0],))
+    inter_width = tf.max(inter_right - inter_left, zeros)
+    inter_height = tf.max(inter_bottom - inter_top, zeros)
+    inter_area = inter_width * inter_height
+
+    true_area = (y_true[:, 2] - y_true[:, 0]) * (y_true[:, 3] - y_true[:, 1])
+    pred_area = (y_pred[:, 2] - y_pred[:, 0]) * (y_pred[:, 3] - y_pred[:, 1])
+    union_area = true_area + pred_area - inter_area
+
+    return tf.divide_no_nan(inter_area, union_area)
+
+def __stateless_bbox_iou__(y_true, y_pred):
+    true_x2, true_y2 = y_true[:, 0]+y_true[:, 2], y_true[:, 1]+y_true[:, 3]
+    pred_x2, pred_y2 = y_pred[:, 0]+y_pred[:, 2], y_pred[:, 1]+y_pred[:, 3]
+
+    y_true = tf.concat([y_true[:, 0], y_true[:, 1], true_x2, true_y2], axis=1)
+    y_pred = tf.concat([y_pred[:, 0], y_pred[:, 1], pred_x2, pred_y2], axis=1)
+
+    return __stateless_x2y2_bbox_iou__(y_true, y_pred)
+
+class MeanBBoxIoU(MeanMetricWrapper):
+    def __init__(self, x2y2=False, name='mean_bbox_iou', dtype=None):
+        bbox_iou_func = __stateless_x2y2_bbox_iou__ if x2y2 else __stateless_bbox_iou__
+        super(MeanBBoxIoU, self).__init__(bbox_iou_func, name=name, dtype=dtype)
 
 
 
