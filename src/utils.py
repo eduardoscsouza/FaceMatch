@@ -25,7 +25,7 @@ def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=
         return df
 
 def bboxs_width_to_x2(bboxs_csv, bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False):
-    df = pd.read_csv(bboxs_csv)
+    df = pd.read_csv(bboxs_csv, index_col=0)
     df["x2"] = df["x_1"] + df["width"]
     df["y2"] = df["y_1"] + df["height"]
     df = df.drop(columns=["width", "height"])
