@@ -7,7 +7,7 @@ import os
 def train_model(model, train_datagen, val_datagen,
                 epochs=1000, steps_per_epoch=200, validation_steps=100,
                 tensorboard_logdir="../experiments/tensorboard_logs",
-                best_model_filepath="best_model.h5", best_model_metric="val_mean_absolute_error",
+                best_model_filepath="best_model.h5", best_model_metric="val_mean_bbox_iou",
                 earlystop_metric="loss", earlystop_min_delta=0.001, early_stop_patience=80):
     tensorboard = TensorBoard(log_dir=tensorboard_logdir,
                             histogram_freq=0,
@@ -76,7 +76,7 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
                 results_dir="../experiments/results",
                 epochs=1000, steps_per_epoch=200, validation_steps=100,
                 tensorboard_logdir="../experiments/tensorboard_logs",
-                best_model_metric="val_mean_absolute_error",
+                best_model_metric="val_mean_bbox_iou",
                 earlystop_metric="loss", earlystop_min_delta=0.001, early_stop_patience=80,
                 evaluation_steps=2000):
 

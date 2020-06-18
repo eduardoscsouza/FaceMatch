@@ -45,7 +45,7 @@ def build_bbox_model(input_size=(56, 56, 3),
                     n_conv_blocks=3, base_conv_n_filters=16,
                     n_dense_layers=2, dense_size=256, dropout_rate=0.25,
                     loss=MeanSquaredError(), optimizer=Adam(),
-                    metrics=[MeanAbsoluteError()]):
+                    metrics=[MeanAbsoluteError(), MeanBBoxIoU(x2y2=False)]):
     model_in = Input(shape=input_size)
 
     model = model_in
@@ -64,68 +64,3 @@ def build_bbox_model(input_size=(56, 56, 3),
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
     return model
-
-
-import numpy as np
-from tensorflow.keras.layers import Lambda
-
-def np_comp(y_true, y_pred):
-    left = np.maximum(y_true[0], y_pred[0])
-    top = np.maximum(y_true[1], y_pred[1])
-    right = np.minimum(y_true[2], y_pred[2])
-    bottom = np.minimum(y_true[3], y_pred[3])
-
-    if (left < right and bottom > top):
-        true_area = (y_true[2] - y_true[0]) * (y_true[3] - y_true[1])
-        pred_area = (y_pred[2] - y_pred[0]) * (y_pred[3] - y_pred[1])
-        inter_area = (right - left) * (bottom - top)
-        return inter_area / (true_area + pred_area - inter_area)
-    else:
-        return 0.0
-
-n = 10000
-true = np.random.random((n, 4))
-true[:, [2, 3]] = true[:, [0, 1]] + np.random.random((n, 2))
-true = true.astype(np.float32)
-
-pred = np.random.random((n, 4))
-pred[:, [2, 3]] = pred[:, [0, 1]] + np.random.random((n, 2))
-pred = pred.astype(np.float32)
-
-correct = np.empty(shape=(n,), dtype=np.float32)
-for i in range(n):
-    correct[i] = np_comp(true[i], pred[i])
-
-aux_true = tf.convert_to_tensor(true)
-aux_pred = tf.convert_to_tensor(pred)
-out = __stateless_x2y2_bbox_iou__(aux_true, aux_pred).numpy()
-
-assert all(out == correct)
-
-aux_true = np.copy(true)
-aux_pred = np.copy(pred)
-aux_true[:, [2, 3]] -= aux_true[:, [0, 1]]
-aux_pred[:, [2, 3]] -= aux_pred[:, [0, 1]]
-aux_true = tf.convert_to_tensor(aux_true)
-aux_pred = tf.convert_to_tensor(aux_pred)
-new_out = __stateless_bbox_iou__(aux_true, aux_pred).numpy()
-
-assert np.allclose(new_out, correct, atol=1e-07)
-
-model_in = Input(shape=(4,))
-model = Lambda(lambda x : x)(model_in)
-model = Model(model_in, model)
-model.compile(loss=MeanSquaredError(), optimizer=Adam(), metrics=[MeanBBoxIoU(x2y2=True)])
-
-correct_mean = np.sum(correct) / n
-
-out_mean = model.evaluate(pred, true, batch_size=32)[1]
-assert np.allclose(correct_mean, out_mean, atol=1e-07)
-
-model_in = Input(shape=(4,))
-model = Lambda(lambda x : x)(model_in)
-model = Model(model_in, model)
-model.compile(loss=MeanSquaredError(), optimizer=Adam(), metrics=[MeanBBoxIoU(x2y2=False)])
-
-new_out_mean = model.evaluate(aux_pred, aux_true, batch_size=32)[1]
-assert np.allclose(correct_mean, new_out_mean, atol=1e-07)
