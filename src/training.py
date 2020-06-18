@@ -7,8 +7,8 @@ import os
 def train_model(model, train_datagen, val_datagen,
                 epochs=1000, steps_per_epoch=200, validation_steps=100,
                 tensorboard_logdir="../experiments/tensorboard_logs",
-                best_model_filepath="best_model.h5", best_model_metric="val_mean_bbox_iou",
-                earlystop_metric="loss", earlystop_min_delta=0.001, early_stop_patience=80):
+                best_model_filepath="best_model.h5", best_model_metric="val_mean_bbox_iou", best_model_metric_mode='max',
+                earlystop_metric="loss", earlystop_metric_mode='min', earlystop_min_delta=0.001, early_stop_patience=80):
     tensorboard = TensorBoard(log_dir=tensorboard_logdir,
                             histogram_freq=0,
                             write_graph=False,
@@ -22,7 +22,7 @@ def train_model(model, train_datagen, val_datagen,
                             min_delta=earlystop_min_delta,
                             patience=early_stop_patience,
                             verbose=True,
-                            mode='auto',
+                            mode=earlystop_metric_mode,
                             baseline=None,
                             restore_best_weights=False)
 
@@ -31,7 +31,7 @@ def train_model(model, train_datagen, val_datagen,
                             verbose=True,
                             save_best_only=True,
                             save_weights_only=True,
-                            mode='auto',
+                            mode=best_model_metric_mode,
                             save_freq='epoch')
 
     model.fit(train_datagen,
