@@ -82,3 +82,14 @@ def standardize_imgs_files(imgs_dir, out_dir, out_size=(224, 224), n_procs=16):
 def normalize(image):
     image_t = ((image - np.min(image)) * 255 / (np.max(image) - np.min(image))).astype(np.uint8)
     return image_t
+
+
+"""
+Returns all filenames from a given directory
+"""
+def getFilenamesFromDir(path):
+    files = []
+    for r, d, f in os.walk(path):
+        for file in f:
+            files.append(os.path.join(r, file))
+    return files
