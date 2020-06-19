@@ -1,6 +1,7 @@
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 import pandas as pd
 import os
+import gc
 
 
 
@@ -93,7 +94,9 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
                 earlystop_metric=earlystop_metric, earlystop_min_delta=earlystop_min_delta, early_stop_patience=early_stop_patience)
     model.load_weights(best_model_filepath)
     model.save(best_model_filepath, overwrite=True, include_optimizer=False, save_format='h5')
+    gc.collect()
 
     train_df = get_evaluation_df(model, evaluate_model(model, train_datagen, evaluation_steps=evaluation_steps))
     val_df = get_evaluation_df(model, evaluate_model(model, val_datagen, evaluation_steps=evaluation_steps))
     combine_train_val_dfs(train_df, val_df).to_csv(metrics_csv_filepath, index=False)
+    gc.collect()

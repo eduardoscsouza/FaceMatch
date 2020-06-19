@@ -7,8 +7,8 @@ cpus = tf.config.list_physical_devices(device_type='CPU')
 gpus = tf.config.list_physical_devices(device_type='GPU')
 for gpu in gpus:
     try:
-        tf.config.experimental.set_memory_growth(gpu, True)
-        #tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6500)])
+        #tf.config.experimental.set_memory_growth(gpu, True)
+        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6500)])
     except RuntimeError as e:
         print(e)
 
@@ -62,6 +62,7 @@ for img_size in [56, 112, 224]:
                         train_datagen = get_bboxs_generator(train_df, imgs_dir=imgs_dir, out_image_size=(img_size, img_size))
                         val_datagen = get_bboxs_generator(val_df, imgs_dir=imgs_dir, out_image_size=(img_size, img_size))
                         del train_df, val_df
+                        gc.collect()
 
                         model = build_bbox_model(input_size=(img_size, img_size, 3),
                                                 n_conv_blocks=n_conv_blocks, base_conv_n_filters=base_conv_n_filters,
@@ -72,13 +73,15 @@ for img_size in [56, 112, 224]:
                         run_experiment(model, exp_name, train_datagen, val_datagen,
                                     results_dir=results_dir, tensorboard_logdir=tensorboard_dir)
 
+                        del exp_name, aux_exp_dir, aux_tensorboard_dir
                         del train_datagen, val_datagen, model
+                        gc.collect()
+
                         tf.keras.backend.clear_session()
+                        gc.collect()
 
                         ### Temporary ###
-                        #del exp_name, aux_exp_dir, aux_tensorboard_dir
-                        #gc.collect()
-                        #sys.exit(0)
+                        from time import sleep
+                        sleep(10)
+                        sys.exit(0)
                         ###########
-                    del exp_name, aux_exp_dir, aux_tensorboard_dir
-                    gc.collect()
