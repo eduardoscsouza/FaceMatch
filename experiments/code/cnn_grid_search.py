@@ -76,9 +76,9 @@ for img_size in [56, 112, 224]:
                         tf.keras.backend.clear_session()
 
                         ### Temporary ###
-                        del exp_name, aux_exp_dir, aux_tensorboard_dir
-                        gc.collect()
-                        sys.exit(0)
+                        #del exp_name, aux_exp_dir, aux_tensorboard_dir
+                        #gc.collect()
+                        #sys.exit(0)
                         ###########
                     del exp_name, aux_exp_dir, aux_tensorboard_dir
                     gc.collect()
