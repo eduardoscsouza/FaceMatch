@@ -1,12 +1,19 @@
 import os
 import cv2
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 import datetime
 import sys
 sys.path.append("../data")
 
 import utils
+
+# Making TensorFlow use just one process
+cpus = tf.config.list_physical_devices(device_type='CPU')
+tf.config.set_visible_devices(cpus)
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
 
 # Loading necessary files for each solution
 face_cascade = cv2.CascadeClassifier('../data/lbpcascade_frontalface.xml')
