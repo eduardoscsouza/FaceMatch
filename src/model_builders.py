@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Conv2D, Dense, DepthwiseConv2D, Dropout, Flatten, Input, MaxPooling2D
+from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten
+from tensorflow.keras.layers import Input, MaxPooling2D, SeparableConv2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
 from tensorflow.keras.optimizers import Adam
@@ -74,10 +75,8 @@ def build_bbox_separable_model(input_size=(56, 56, 3),
 
     model = model_in
     for i in range(n_conv_blocks):
-        model = DepthwiseConv2D((3, 3), padding='same', activation='relu', name="block-{}_separable_conv_0".format(i))(model)
-        model = Conv2D(base_conv_n_filters*(2**i), (1, 1), padding='valid', activation='relu', name="block-{}_conv_0".format(i))(model)
-        model = DepthwiseConv2D((3, 3), padding='same', activation='relu', name="block-{}_separable_conv_1".format(i))(model)
-        model = Conv2D(base_conv_n_filters*(2**i), (1, 1), padding='valid', activation='relu', name="block-{}_conv_1".format(i))(model)
+        model = SeparableConv2D(base_conv_n_filters*(2**i), (3, 3), padding='same', activation='relu', name="block-{}_conv_0".format(i))(model)
+        model = SeparableConv2D(base_conv_n_filters*(2**i), (3, 3), padding='same', activation='relu', name="block-{}_conv_1".format(i))(model)
         model = MaxPooling2D((2, 2), strides=(2, 2), name="block-{}_pool".format(i))(model)
 
     model = Flatten()(model)
@@ -90,3 +89,111 @@ def build_bbox_separable_model(input_size=(56, 56, 3),
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
     return model
+
+
+
+def build_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1):
+    model_in = Input(shape=(224, 224, 3))
+
+    model = Conv2D(64, (3, 3), padding='same', activation='relu')(model_in)
+    model = Conv2D(64, (3, 3), padding='same', activation='relu')(model)
+    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+
+    model = Conv2D(128, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(128, (3, 3), padding='same', activation='relu')(model)
+    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+
+    model = Conv2D(256, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(256, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(256, (3, 3), padding='same', activation='relu')(model)
+    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+
+    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+
+    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
+    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+
+    model_dense_0 = Conv2D(4096, (7, 7), padding='valid', activation='relu')(model)
+    model_dense_0 = Dropout(0.5)(model_dense_0)
+
+    model_dense_1 = Conv2D(4096, (1, 1), padding='valid', activation='relu')(model_dense_0)
+    model_dense_1 = Dropout(0.5)(model_dense_1)
+
+    model_dense_2 = Conv2D(2622, (1, 1), padding='valid')(model_dense_1)
+    model_dense_2 = Flatten()(model_dense_2)
+
+    model_out = Activation('softmax')(model_dense_2)
+
+    vgg_model = Model(model_in, model_out)
+    vgg_model.load_weights(vgg_weights_filepath)
+
+    extraction_layers = []
+    extraction_layers += [Flatten()(model_dense_0)]
+    extraction_layers += [Flatten()(model_dense_1)]
+    extraction_layers += [model_dense_2]
+    extractor_model = Model(model_in, extraction_layers[extraction_layer_indx])
+
+    return extractor_model
+
+'''
+class CosTriplet(Loss):
+	def call(self, y_true, y_pred):
+		y_pred = ops.convert_to_tensor_v2(y_pred)
+		y_true = math_ops.cast(y_true, y_pred.dtype)
+		return K.mean(math_ops.square(y_pred - y_true), axis=-1)
+
+class EuclTriplet(Loss):
+	def call(self, y_true, y_pred):
+		dist_pos =
+		y_pred = ops.convert_to_tensor_v2(y_pred)
+		y_true = math_ops.cast(y_true, y_pred.dtype)
+		return K.mean(math_ops.square(y_pred - y_true), axis=-1)
+
+def __eucl_dist__(anch, comp):
+	return tf.reduce_sum(tf.square(anch - comp), axis=1, keepdims=True))
+
+def __cos_dist__(anch, comp):
+	mult = anch * comp
+	norm_mult = tf.norm(anch, axis=1, keepdims=True) * tf.norm(comp, axis=1, keepdims=True)
+	dist = 1.0 - (mult / norm_mult)
+
+
+
+class TripletLoss(Layer):
+  def __init__(self, dist_type='eucl', *args, **kwargs):
+    super(TripletLoss, self).__init__(*args, **kwargs)
+    self.dist_type = dist_type
+
+  def call(self, vectors):
+    # We use `add_loss` to create a regularization loss
+    # that depends on the inputs.
+    self.add_loss(self.rate * tf.reduce_sum(tf.square(inputs)))
+    return inputs
+
+def build_triplet_model(dist_type='eucl', alpha=0.5,    extraction_layer_indx=1):
+    extractor_model = build_feature_extractor(extraction_layer_indx=extraction_layer_indx)
+
+    anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
+    anchor_out = extractor_model(anchor_in)
+
+    pos_in = Input(shape=(224, 224, 3), name="pos_in")
+    pos_out = extractor_model(pos_in)
+
+    neg_in = Input(shape=(224, 224, 3), name="neg_in")
+    neg_out = extractor_model(neg_in)
+
+    triplet_model = Model([anchor_in, pos_in, neg_in], [anchor_out, pos_out, neg_out])
+    return triplet_model
+
+if __name__ == '__main__':
+    import numpy as np
+
+    m = build_triplet_model()
+    a, b, c = np.random.random((5, 224, 224, 3)), np.random.random((5, 224, 224, 3)), np.random.random((5, 224, 224, 3))
+    print(m.predict([a, b, c])[0].shape)
+'''
