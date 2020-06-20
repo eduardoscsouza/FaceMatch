@@ -189,6 +189,8 @@ data/Img_Resize
 # What was in the template wasn't enogh
 *.vscode/*
 
+### Axuliary Shell Scripts ###
 cleanup.sh
+
+### Mac Files ###
 .DS_Store
-data/shape_predictor_68_face_landmarks.dat
