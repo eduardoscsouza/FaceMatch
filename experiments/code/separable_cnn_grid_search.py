@@ -64,7 +64,7 @@ for img_size in [56, 112, 224]:
                         del train_df, val_df
                         gc.collect()
 
-                        model = build_bbox_model(input_size=(img_size, img_size, 3),
+                        model = build_bbox_separable_model(input_size=(img_size, img_size, 3),
                                                 n_conv_blocks=n_conv_blocks, base_conv_n_filters=base_conv_n_filters,
                                                 n_dense_layers=2, dense_size=dense_size, dropout_rate=0.30,
                                                 loss=MeanSquaredError(), optimizer=Adam(),
