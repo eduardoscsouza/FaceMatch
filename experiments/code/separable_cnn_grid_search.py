@@ -37,8 +37,8 @@ import gc
 import shutil
 
 data_dir = "../../data/"
-results_dir = "../results/grid_search/"
-tensorboard_dir = "../tensorboard_logs/grid_search/"
+results_dir = "../results/separable_grid_search/"
+tensorboard_dir = "../tensorboard_logs/separable_grid_search/"
 
 bboxs_csv = os.path.join(data_dir, "bboxs_x2y2.csv")
 splits_csv = os.path.join(data_dir, "splits.csv")
