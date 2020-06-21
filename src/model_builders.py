@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten
-from tensorflow.keras.layers import Input, MaxPooling2D, SeparableConv2D
+from tensorflow.keras.layers import Input, Layer, MaxPooling2D, SeparableConv2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
 from tensorflow.keras.optimizers import Adam
@@ -140,60 +140,53 @@ def build_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", 
 
     return extractor_model
 
-'''
-class CosTriplet(Loss):
-	def call(self, y_true, y_pred):
-		y_pred = ops.convert_to_tensor_v2(y_pred)
-		y_true = math_ops.cast(y_true, y_pred.dtype)
-		return K.mean(math_ops.square(y_pred - y_true), axis=-1)
-
-class EuclTriplet(Loss):
-	def call(self, y_true, y_pred):
-		dist_pos =
-		y_pred = ops.convert_to_tensor_v2(y_pred)
-		y_true = math_ops.cast(y_true, y_pred.dtype)
-		return K.mean(math_ops.square(y_pred - y_true), axis=-1)
-
-def __eucl_dist__(anch, comp):
-	return tf.reduce_sum(tf.square(anch - comp), axis=1, keepdims=True))
-
-def __cos_dist__(anch, comp):
-	mult = anch * comp
-	norm_mult = tf.norm(anch, axis=1, keepdims=True) * tf.norm(comp, axis=1, keepdims=True)
-	dist = 1.0 - (mult / norm_mult)
 
 
+class CosineDistance(Layer):
+    def __init__(self, name=None, **kwargs):
+        super(CosineDistance, self).__init__(name=name, trainable=False, **kwargs)
 
-class TripletLoss(Layer):
-  def __init__(self, dist_type='eucl', *args, **kwargs):
-    super(TripletLoss, self).__init__(*args, **kwargs)
-    self.dist_type = dist_type
+    def call(self, anch, comp):
+        mult = tf.reduce_sum(anch * comp, axis=1)
+        norm_mult = tf.norm(anch, axis=1, ord='euclidean') * tf.norm(comp, axis=1, ord='euclidean')
+        dist = 1.0 - tf.math.divide_no_nan(mult, norm_mult)
+        return dist
 
-  def call(self, vectors):
-    # We use `add_loss` to create a regularization loss
-    # that depends on the inputs.
-    self.add_loss(self.rate * tf.reduce_sum(tf.square(inputs)))
-    return inputs
+class EuclidianDistanceSquared(Layer):
+    def __init__(self, name=None, **kwargs):
+        super(EuclidianDistanceSquared, self).__init__(name=name, trainable=False, **kwargs)
 
-def build_triplet_model(dist_type='eucl', alpha=0.5,    extraction_layer_indx=1):
-    extractor_model = build_feature_extractor(extraction_layer_indx=extraction_layer_indx)
+    def call(self, anch, comp):
+        dist = tf.square(anch - comp)
+        dist = tf.reduce_sum(dist, axis=1)
+        return dist
 
-    anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
-    anchor_out = extractor_model(anchor_in)
 
-    pos_in = Input(shape=(224, 224, 3), name="pos_in")
-    pos_out = extractor_model(pos_in)
-
-    neg_in = Input(shape=(224, 224, 3), name="neg_in")
-    neg_out = extractor_model(neg_in)
-
-    triplet_model = Model([anchor_in, pos_in, neg_in], [anchor_out, pos_out, neg_out])
-    return triplet_model
 
 if __name__ == '__main__':
     import numpy as np
 
-    m = build_triplet_model()
-    a, b, c = np.random.random((5, 224, 224, 3)), np.random.random((5, 224, 224, 3)), np.random.random((5, 224, 224, 3))
-    print(m.predict([a, b, c])[0].shape)
-'''
+    n_samples, n_feats = 1000, 256
+    a, b = np.random.random((n_samples, n_feats)).astype(np.float32), np.random.random((n_samples, n_feats)).astype(np.float32)
+
+    correct = np.empty(n_samples)
+    for i in range(n_samples):
+        aux_a, aux_b = a[i], b[i]
+        correct[i] = 1.0 - (np.sum(aux_a*aux_b) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_b)))
+
+    in_1 = Input(shape=(n_feats,))
+    in_2 = Input(shape=(n_feats,))
+    out = CosineDistance()(in_1, in_2)
+    model = Model([in_1, in_2], out)
+    assert np.allclose(model.predict([a, b]), correct)
+
+    correct = np.empty(n_samples)
+    for i in range(n_samples):
+        aux_a, aux_b = a[i], b[i]
+        correct[i] = np.sum(np.square(aux_a-aux_b))
+
+    in_1 = Input(shape=(n_feats,))
+    in_2 = Input(shape=(n_feats,))
+    out = EuclidianDistanceSquared()(in_1, in_2)
+    model = Model([in_1, in_2], out)
+    assert np.allclose(model.predict([a, b]), correct)
