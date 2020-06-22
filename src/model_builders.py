@@ -92,7 +92,7 @@ def build_bbox_separable_model(input_size=(56, 56, 3),
 
 
 
-def build_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1):
+def build_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1, name="vgg16_face_extractor"):
     model_in = Input(shape=(224, 224, 3))
 
     model = Conv2D(64, (3, 3), padding='same', activation='relu')(model_in)
@@ -136,25 +136,26 @@ def build_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", 
     extraction_layers += [Flatten()(model_dense_0)]
     extraction_layers += [Flatten()(model_dense_1)]
     extraction_layers += [model_dense_2]
-    extractor_model = Model(model_in, extraction_layers[extraction_layer_indx])
+    extractor_model = Model(model_in, extraction_layers[extraction_layer_indx], name=name)
 
     return extractor_model
 
 
 
 class CosineDistance(Layer):
-    def __init__(self, name=None, **kwargs):
-        super(CosineDistance, self).__init__(name=name, trainable=False, **kwargs)
+    def __init__(self, name=None, dtype='float32', **kwargs):
+        super(CosineDistance, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
+        self.aux_one = tf.constant(1.0, dtype=dtype)
 
     def call(self, anch, comp):
         mult = tf.reduce_sum(anch * comp, axis=1, keepdims=True)
         norm_mult = tf.norm(anch, axis=1, keepdims=True, ord='euclidean') * tf.norm(comp, axis=1, keepdims=True, ord='euclidean')
-        dist = 1.0 - tf.math.divide_no_nan(mult, norm_mult)
+        dist = self.aux_one - tf.math.divide_no_nan(mult, norm_mult)
         return dist
 
 class EuclidianDistanceSquared(Layer):
-    def __init__(self, name=None, **kwargs):
-        super(EuclidianDistanceSquared, self).__init__(name=name, trainable=False, **kwargs)
+    def __init__(self, name=None, dtype='float32', **kwargs):
+        super(EuclidianDistanceSquared, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
 
     def call(self, anch, comp):
         dist = tf.square(anch - comp)
@@ -162,12 +163,13 @@ class EuclidianDistanceSquared(Layer):
         return dist
 
 class TripletLoss(Layer):
-    def __init__(self, alpha=0.5, name=None, **kwargs):
-        super(TripletLoss, self).__init__(name=name, trainable=False, **kwargs)
-        self.alpha = alpha
+    def __init__(self, alpha=0.5, name=None, dtype='float32', **kwargs):
+        super(TripletLoss, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
+        self.alpha = tf.constant(alpha, dtype=dtype)
+        self.aux_zero = tf.constant(0.0, dtype=dtype)
 
     def call(self, pos_dist, neg_dist):
-        tripl = tf.maximum(pos_dist - neg_dist + self.alpha, 0)
+        tripl = tf.maximum(pos_dist - neg_dist + self.alpha, self.aux_zero)
         self.add_loss(tripl)
         return tripl
 
@@ -194,3 +196,103 @@ def build_triplet_model(dist_type='eucl', alpha=0.5, vgg_weights_filepath="../da
 
     triplet_model = Model([anchor_in, pos_in, neg_in], triplet)
     return triplet_model
+
+
+
+if __name__ == '__main__':
+    import numpy as np
+
+    n_samples, n_feats = 1000, 256
+    a, b = np.random.random((n_samples, n_feats)).astype(np.float32), np.random.random((n_samples, n_feats)).astype(np.float32)
+
+    correct = np.empty(n_samples, dtype=np.float32)
+    for i in range(n_samples):
+        aux_a, aux_b = a[i], b[i]
+        correct[i] = 1.0 - (np.sum(aux_a*aux_b) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_b)))
+
+    in_1 = Input(shape=(n_feats,))
+    in_2 = Input(shape=(n_feats,))
+    out = CosineDistance()(in_1, in_2)
+    model = Model([in_1, in_2], out)
+    assert np.allclose(model.predict([a, b])[:, 0], correct)
+
+    correct = np.empty(n_samples, dtype=np.float32)
+    for i in range(n_samples):
+        aux_a, aux_b = a[i], b[i]
+        correct[i] = np.square(np.linalg.norm(aux_a-aux_b))
+
+    in_1 = Input(shape=(n_feats,))
+    in_2 = Input(shape=(n_feats,))
+    out = EuclidianDistanceSquared()(in_1, in_2)
+    model = Model([in_1, in_2], out)
+    assert np.allclose(model.predict([a, b])[:, 0], correct)
+
+
+
+    import cv2
+    import gc
+    from glob import glob
+    from time import time
+    from tensorflow.keras.applications import vgg16
+
+    imgs = []
+    for img in glob("temp/*.jpg"):
+        imgs += [cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2RGB)]
+    imgs = vgg16.preprocess_input(np.asarray(imgs)).astype(np.float32)
+
+    n_samples = len(imgs)
+    split_size = n_samples//3
+    alpha = np.random.random((1,)).astype(np.float32)[0]
+    a, b, c = imgs[:split_size], imgs[split_size:2*split_size], imgs[2*split_size:]
+
+    for extraction_layer_indx in range(3):
+        extractor_model = build_feature_extractor(extraction_layer_indx=extraction_layer_indx)
+        p_a, p_b, p_c = extractor_model.predict(a), extractor_model.predict(b), extractor_model.predict(c)
+
+        correct = np.empty(split_size, dtype=np.float32)
+        for i in range(split_size):
+            aux_a, aux_b, aux_c = p_a[i], p_b[i], p_c[i]
+            d_p = np.square(np.linalg.norm(aux_a-aux_b))
+            d_n = np.square(np.linalg.norm(aux_a-aux_c))
+            correct[i] = np.maximum(d_p - d_n + alpha, 0)
+
+        model = build_triplet_model(dist_type='eucl', alpha=alpha, extraction_layer_indx=extraction_layer_indx)
+        assert np.allclose(model.predict([a, b, c])[:, 0], correct, rtol=0.000316228, atol=1e-06)
+
+        correct = np.empty(split_size, dtype=np.float32)
+        for i in range(split_size):
+            aux_a, aux_b, aux_c = p_a[i], p_b[i], p_c[i]
+            d_p = 1.0 - (np.sum(aux_a*aux_b) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_b)))
+            d_n = 1.0 - (np.sum(aux_a*aux_c) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_c)))
+            correct[i] = np.maximum(d_p - d_n + alpha, 0)
+
+        model = build_triplet_model(dist_type='cos', alpha=alpha, extraction_layer_indx=extraction_layer_indx)
+        assert np.allclose(model.predict([a, b, c])[:, 0], correct, rtol=0.000316228, atol=1e-06)
+        del extractor_model, p_a, p_b, p_c
+    del correct, in_1, in_2, out, model
+    tf.keras.backend.clear_session()
+    gc.collect()
+
+    '''
+    tf.keras.backend.clear_session()
+    model = build_triplet_model(dist_type='cos', alpha=alpha)
+    model.compile()
+    gc.collect()
+
+    model.fit(x=[a, b, c], batch_size=8)
+    t0 = time()
+    model.fit(x=[a, b, c], batch_size=8)
+    print(time() - t0)
+    # 15.407991409301758 seconds for 20 batches of 8
+
+    tf.keras.backend.clear_session()
+    model = build_triplet_model(dist_type='eucl', alpha=alpha)
+    model.compile()
+    gc.collect()
+
+    model.fit(x=[a, b, c], batch_size=8)
+    t0 = time()
+    model.fit(x=[a, b, c], batch_size=8)
+    print(time() - t0)
+    # 13.582106113433838 seconds for 20 batches of 8
+    '''
