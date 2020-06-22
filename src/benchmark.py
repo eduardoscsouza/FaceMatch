@@ -2,10 +2,12 @@ import os
 import cv2
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 from tensorflow.keras.models import load_model
 import datetime
 import sys
 sys.path.append("../data")
+sys.path.append("../sample_imgs")
 
 import utils
 
@@ -36,7 +38,8 @@ def __getBoundingBoxCV__(image):
         return (-1, -1, -1, -1)
 
     x, y, w, h = faces[0]
-    return (x, y, x+w, y+h)
+
+    return (x/image.shape[0], y/image.shape[1], (x+w)/image.shape[0], (y+h)/image.shape[1])
 
 """
 Returns the upper-left and lower-right coordinates of the face
@@ -47,10 +50,14 @@ def __getBoundingBoxCNN__(image):
     aux_image = (aux_image/255.0)[np.newaxis, :, :, :]
     x1, y1, width, height = model.predict(aux_image)[0]
 
+    """
     x_up_left, y_up_left = int(image.shape[1]*x1), int(image.shape[0]*y1)
     x_down_right, y_down_right = int(image.shape[1]*(x1+width)), int(image.shape[0]*(y1+height))
 
     return (x_up_left, y_up_left, x_down_right, y_down_right)
+    """
+
+    return (x1, y1, x1+width, y1+height)
 
 """
 Calculates intersection over union between boxA and boxB
@@ -120,9 +127,14 @@ def getIouMean(bboxesA, bboxesB):
 
 
 def main():
-    # Getting all images from directory in path
-    path = '../sample_imgs/raw'
-    images_paths = utils.getFilenamesFromDir(path)
+    # Getting all images listed in csv
+    csv_path = '../data/benchmark_bboxs_x2y2.csv'
+    df = pd.read_csv(csv_path)
+
+    images_paths = []
+
+    for img_file in df["image_id"]:
+        images_paths.append('../sample_imgs/raw/' + img_file)
 
 
     # Getting running time of both solutions
@@ -133,13 +145,21 @@ def main():
     print("Running time using our CNN = " + str(cnn_time))
 
 
+    # Calculating mean of Intersection over Union to compare the different results
     # Getting bounding boxes of both solutions
     cv_bboxes = getBoundingBoxesOfImages(__getBoundingBoxCV__, images_paths)
     cnn_bboxes = getBoundingBoxesOfImages(__getBoundingBoxCNN__, images_paths)
 
-    # Calculating mean of Intersection over Union to compare the different results
-    mean_iou = getIouMean(cv_bboxes, cnn_bboxes)
-    print("Mean of Intersection over Union = " + str(mean_iou))
+    label_bboxes = []
+
+    for row in df.itertuples():
+        label_bboxes.append((row.x_1, row.y_1, row.x2, row.y2))
+
+
+    cv_mean_iou = getIouMean(cv_bboxes, label_bboxes)
+    cnn_mean_iou = getIouMean(cnn_bboxes, label_bboxes)
+    print("Mean of Intersection over Union using OpenCV = " + str(cv_mean_iou))
+    print("Mean of Intersection over Union using our CNN = " + str(cnn_mean_iou))
 
 
 main()
