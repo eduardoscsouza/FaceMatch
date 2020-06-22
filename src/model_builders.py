@@ -147,8 +147,8 @@ class CosineDistance(Layer):
         super(CosineDistance, self).__init__(name=name, trainable=False, **kwargs)
 
     def call(self, anch, comp):
-        mult = tf.reduce_sum(anch * comp, axis=1)
-        norm_mult = tf.norm(anch, axis=1, ord='euclidean') * tf.norm(comp, axis=1, ord='euclidean')
+        mult = tf.reduce_sum(anch * comp, axis=1, keepdims=True)
+        norm_mult = tf.norm(anch, axis=1, keepdims=True, ord='euclidean') * tf.norm(comp, axis=1, keepdims=True, ord='euclidean')
         dist = 1.0 - tf.math.divide_no_nan(mult, norm_mult)
         return dist
 
@@ -158,8 +158,42 @@ class EuclidianDistanceSquared(Layer):
 
     def call(self, anch, comp):
         dist = tf.square(anch - comp)
-        dist = tf.reduce_sum(dist, axis=1)
+        dist = tf.reduce_sum(dist, axis=1, keepdims=True)
         return dist
+
+class TripletLoss(Layer):
+    def __init__(self, alpha=0.5, name=None, **kwargs):
+        super(TripletLoss, self).__init__(name=name, trainable=False, **kwargs)
+        self.alpha = alpha
+
+    def call(self, pos_dist, neg_dist):
+        tripl = tf.maximum(pos_dist - neg_dist + self.alpha, 0)
+        self.add_loss(tripl)
+        return tripl
+
+def build_triplet_model(dist_type='eucl', alpha=0.5, vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1):
+    extractor_model = build_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx)
+
+    anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
+    anchor_out = extractor_model(anchor_in)
+
+    pos_in = Input(shape=(224, 224, 3), name="pos_in")
+    pos_out = extractor_model(pos_in)
+
+    neg_in = Input(shape=(224, 224, 3), name="neg_in")
+    neg_out = extractor_model(neg_in)
+
+    if dist_type == 'cos':
+        pos_dist = CosineDistance(name="pos_dist")(anchor_out, pos_out)
+        neg_dist = CosineDistance(name="neg_dist")(anchor_out, neg_out)
+    else:
+        pos_dist = EuclidianDistanceSquared(name="pos_dist")(anchor_out, pos_out)
+        neg_dist = EuclidianDistanceSquared(name="neg_dist")(anchor_out, neg_out)
+
+    triplet = TripletLoss(alpha=alpha)(pos_dist, neg_dist)
+
+    triplet_model = Model([anchor_in, pos_in, neg_in], triplet)
+    return triplet_model
 
 
 
@@ -178,15 +212,63 @@ if __name__ == '__main__':
     in_2 = Input(shape=(n_feats,))
     out = CosineDistance()(in_1, in_2)
     model = Model([in_1, in_2], out)
-    assert np.allclose(model.predict([a, b]), correct)
+    assert np.allclose(model.predict([a, b])[:, 0], correct)
 
     correct = np.empty(n_samples)
     for i in range(n_samples):
         aux_a, aux_b = a[i], b[i]
-        correct[i] = np.sum(np.square(aux_a-aux_b))
+        correct[i] = np.square(np.linalg.norm(aux_a-aux_b))
 
     in_1 = Input(shape=(n_feats,))
     in_2 = Input(shape=(n_feats,))
     out = EuclidianDistanceSquared()(in_1, in_2)
     model = Model([in_1, in_2], out)
-    assert np.allclose(model.predict([a, b]), correct)
+    assert np.allclose(model.predict([a, b])[:, 0], correct)
+
+
+
+    n_samples = 50
+    alpha = np.random.random((1,)).astype(np.float32)[0]
+    a, b, c = np.random.random((n_samples, 224, 224, 3)), np.random.random((n_samples, 224, 224, 3)), np.random.random((n_samples, 224, 224, 3))
+    a, b, c = a.astype(np.float32), b.astype(np.float32), c.astype(np.float32)
+
+    for extraction_layer_indx in range(3):
+        extractor_model = build_feature_extractor(vgg_weights_filepath="data/vgg_face_weights.h5", extraction_layer_indx=extraction_layer_indx)
+        p_a, p_b, p_c = extractor_model.predict(a), extractor_model.predict(b), extractor_model.predict(c)
+
+        correct = np.empty(n_samples)
+        for i in range(n_samples):
+            aux_a, aux_b, aux_c = p_a[i], p_b[i], p_c[i]
+            d_p = np.square(np.linalg.norm(aux_a-aux_b))
+            d_n = np.square(np.linalg.norm(aux_a-aux_c))
+            correct[i] = np.maximum(d_p - d_n + alpha, 0)
+
+        model = build_triplet_model(dist_type='eucl', alpha=alpha, vgg_weights_filepath="data/vgg_face_weights.h5", extraction_layer_indx=extraction_layer_indx)
+        assert np.allclose(model.predict([a, b, c])[:, 0], correct)
+
+        correct = np.empty(n_samples)
+        for i in range(n_samples):
+            aux_a, aux_b, aux_c = p_a[i], p_b[i], p_c[i]
+            d_p = 1.0 - (np.sum(aux_a*aux_b) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_b)))
+            d_n = 1.0 - (np.sum(aux_a*aux_c) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_c)))
+            correct[i] = np.maximum(d_p - d_n + alpha, 0)
+
+        model = build_triplet_model(dist_type='cos', alpha=alpha, vgg_weights_filepath="data/vgg_face_weights.h5", extraction_layer_indx=extraction_layer_indx)
+        assert np.allclose(model.predict([a, b, c])[:, 0], correct)
+
+    import gc
+    from time import time
+    del a, b, c, correct, in_1, in_2, out, model
+    gc.collect()
+
+    n_samples = 480
+    a, b, c = np.random.random((n_samples, 224, 224, 3)), np.random.random((n_samples, 224, 224, 3)), np.random.random((n_samples, 224, 224, 3))
+    a, b, c = a.astype(np.float32), b.astype(np.float32), c.astype(np.float32)
+    gc.collect()
+
+    model = build_triplet_model(dist_type='cos', alpha=alpha, vgg_weights_filepath="data/vgg_face_weights.h5")
+    model.compile()
+
+    t0 = time()
+    model.fit(x=[a, b, c])
+    print(time() - t0)
