@@ -127,8 +127,8 @@ def getFilenamesFromDir(path):
 
 
 if __name__ == '__main__':
-    gen_bboxs_csv("~/Downloads/list_bbox_celeba.txt", "../data/Img/", bboxs_csv_outfile="bboxs.csv", return_df=False, n_procs=16)
-    gen_bboxs_csv_x2y2("~/Downloads/list_bbox_celeba.txt", "../data/Img/", bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False, n_procs=16)
+    gen_bboxs_csv("../data/list_bbox_celeba_fixed.txt", "../data/Img/", bboxs_csv_outfile="bboxs.csv", return_df=False, n_procs=16)
+    gen_bboxs_csv_x2y2("../data/list_bbox_celeba_fixed.txt", "../data/Img/", bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False, n_procs=16)
     gen_splits_csv("~/Downloads/list_eval_partition.txt", splits_csv_outfile="splits.csv", return_df=False)
     gen_indvs_csv("~/Downloads/identity_CelebA.txt", indvs_csv_outfile="indvs.csv", return_df=False)
-    crop_standardize_imgs_files("~/Downloads/list_bbox_celeba.txt", "../data/Img/", "Img_Crop_Resize", out_size=(224, 224), n_procs=16)
+    crop_standardize_imgs_files("../data/list_bbox_celeba_fixed.txt", "../data/Img/", "Img_Crop_Resize", out_size=(224, 224), n_procs=16)

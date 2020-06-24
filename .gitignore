@@ -184,6 +184,7 @@ dmypy.json
 data/Img
 data/Img_Align
 data/Img_Resize
+data/Img_Crop_Resize
 
 ### VisualStudioCode ###
 # What was in the template wasn't enogh
