@@ -24,11 +24,19 @@ def gen_bboxs_csv(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs.csv", return_df=
     if return_df:
         return df
 
-def bboxs_width_to_x2(bboxs_csv, bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False):
-    df = pd.read_csv(bboxs_csv, index_col=0)
-    df["x2"] = df["x_1"] + df["width"]
-    df["y2"] = df["y_1"] + df["height"]
+def gen_bboxs_csv_x2y2(bboxs_txt, imgs_dir, bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False, n_procs=16):
+    df = pd.read_csv(bboxs_txt, engine="python", sep='\ +', skiprows=1, index_col=0, dtype={0:str, 1:np.int32, 2:np.int32, 3:np.int32, 4:np.int32})
+
+    with Pool(n_procs) as pool:
+        imgs_shapes = pool.map(__get_shape__, [os.path.join(imgs_dir, img) for img in df.index])
+
+    df["x_2"] = df["x_1"] + df["width"]
+    df["y_2"] = df["y_1"] + df["height"]
     df = df.drop(columns=["width", "height"])
+
+    heights, widths = np.asarray([shape[0] for shape in imgs_shapes]), np.asarray([shape[1] for shape in imgs_shapes])
+    df["y_1"], df["y_2"] = df["y_1"] / heights, df["y_2"] / heights
+    df["x_1"], df["x_2"] = df["x_1"] / widths, df["x_2"] / widths
 
     df.to_csv(bboxs_csv_outfile)
     if return_df:
@@ -50,6 +58,8 @@ def gen_indvs_csv(indvs_txt, indvs_csv_outfile="indvs.csv", return_df=False):
     df.to_csv(indvs_csv_outfile)
     if return_df:
         return df
+
+
 
 def get_train_val_test_dfs(bboxs_csv, splits_csv):
     bboxs_df = pd.read_csv(bboxs_csv)
@@ -78,11 +88,31 @@ def standardize_imgs_files(imgs_dir, out_dir, out_size=(224, 224), n_procs=16):
 
 
 
+def __crop_standardize_img__(img_filename, crop_values, out_dir, out_size):
+    x, y, width, height = crop_values
+    x2, y2 = x+width, y+height
+
+    img = cv2.imread(img_filename, cv2.IMREAD_COLOR)
+    img = img[y:y2, x:x2]
+    img = cv2.resize(img, out_size, interpolation=cv2.INTER_CUBIC)
+
+    out_name = '.'.join(img_filename.split('/')[-1].split('.')[:-1]) + ".jpg"
+    cv2.imwrite(os.path.join(out_dir, out_name), img, [cv2.IMWRITE_JPEG_QUALITY, 95])
+
+def crop_standardize_imgs_files(bboxs_txt, imgs_dir, out_dir, out_size=(224, 224), n_procs=16):
+    df = pd.read_csv(bboxs_txt, engine="python", sep='\ +', skiprows=1, index_col=0, dtype={0:str, 1:np.int32, 2:np.int32, 3:np.int32, 4:np.int32})
+    os.makedirs(out_dir, exist_ok=True)
+
+    df.index = [os.path.join(imgs_dir, index) for index in df.index]
+    with Pool(n_procs) as pool:
+        _ = pool.starmap(__crop_standardize_img__, [(index, row.values, out_dir, out_size) for index, row in df.iterrows()])
+
+
+
 # Normalizes image from 0 to 255 and make the values integer
 def normalize(image):
     image_t = ((image - np.min(image)) * 255 / (np.max(image) - np.min(image))).astype(np.uint8)
     return image_t
-
 
 """
 Returns all filenames from a given directory
@@ -93,3 +123,12 @@ def getFilenamesFromDir(path):
         for file in f:
             files.append(os.path.join(r, file))
     return files
+
+
+
+if __name__ == '__main__':
+    gen_bboxs_csv("~/Downloads/list_bbox_celeba.txt", "../data/Img/", bboxs_csv_outfile="bboxs.csv", return_df=False, n_procs=16)
+    gen_bboxs_csv_x2y2("~/Downloads/list_bbox_celeba.txt", "../data/Img/", bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False, n_procs=16)
+    gen_splits_csv("~/Downloads/list_eval_partition.txt", splits_csv_outfile="splits.csv", return_df=False)
+    gen_indvs_csv("~/Downloads/identity_CelebA.txt", indvs_csv_outfile="indvs.csv", return_df=False)
+    crop_standardize_imgs_files("~/Downloads/list_bbox_celeba.txt", "../data/Img/", "Img_Crop_Resize", out_size=(224, 224), n_procs=16)
