@@ -99,14 +99,3 @@ class FaceTripleGenerator(Sequence):
         indvs = indvs if self.preprocess_func is None else [self.preprocess_func(indv) for indv in indvs]
 
         return indvs
-
-if __name__ == '__main__':
-    import pandas as pd
-    df = pd.read_csv("../data/indvs.csv")
-    gen = FaceTripleGenerator(df, imgs_dir="../data/Img_Crop_Resize")
-    it = gen.__getitem__(0)
-    for i in range(32):
-        d = os.makedirs("temp/{}".format(i), exist_ok=True)
-        cv2.imwrite("temp/{}/{}.jpg".format(i, "0"), cv2.cvtColor(it[0][i], cv2.COLOR_RGB2BGR))
-        cv2.imwrite("temp/{}/{}.jpg".format(i, "1"), cv2.cvtColor(it[1][i], cv2.COLOR_RGB2BGR))
-        cv2.imwrite("temp/{}/{}.jpg".format(i, "2"), cv2.cvtColor(it[2][i], cv2.COLOR_RGB2BGR))
