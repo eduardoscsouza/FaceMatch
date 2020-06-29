@@ -67,6 +67,7 @@ class FaceTripleGenerator(Sequence):
         self.indvs = [np.asarray(imgs.iloc[:, 0]) for _, imgs in self.indvs if len(imgs) >= min_indv_imgs]
         self.__aux_len__ = len(self.indvs)
         self.__aux_indvs_len__ = [len(indv) for indv in self.indvs]
+        self.__aux_zeros__ = np.zeros((batch_size, 1), dtype=out_dtype)
 
         self.imgs_dir = imgs_dir
         self.batch_size = batch_size
@@ -98,4 +99,4 @@ class FaceTripleGenerator(Sequence):
         indvs = [indvs[:, 0], indvs[:, 1], indvs[:, 2]]
         indvs = indvs if self.preprocess_func is None else [self.preprocess_func(indv) for indv in indvs]
 
-        return indvs
+        return indvs, self.__aux_zeros__

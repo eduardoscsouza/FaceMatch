@@ -65,9 +65,10 @@ for dist in ['eucl', 'cos']:
         val_datagen = FaceTripleGenerator(val_df, **gen_kwargs)
         gc.collect()
 
-        model = build_triplet_model(dist_type=dist, alpha=0.1,
+        model = build_triplet_model(dist_type=dist, alpha=1.0,
                                     vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=1,
                                     extra_out_layer=None, optimizer=Adamax())
+        model.summary()
 
         run_experiment(model, exp_name, train_datagen, val_datagen,
                     epochs=200, steps_per_epoch=50, validation_steps=10,

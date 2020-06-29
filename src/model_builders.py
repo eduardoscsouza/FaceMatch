@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten
-from tensorflow.keras.layers import Input, Layer, MaxPooling2D, SeparableConv2D
+from tensorflow.keras.layers import Input, Lambda, Layer, MaxPooling2D, SeparableConv2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
 from tensorflow.keras.optimizers import Adam, Adamax
@@ -147,21 +147,21 @@ class CosineDistance(Layer):
         super(CosineDistance, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
         self.aux_one = tf.constant(1.0, dtype=dtype)
 
-    def call(self, anch, comp):
+    def call(self, inputs):
+        anch, comp = inputs[0], inputs[1]
         mult = tf.reduce_sum(anch * comp, axis=1, keepdims=True)
         norm_mult = tf.norm(anch, axis=1, keepdims=True, ord='euclidean') * tf.norm(comp, axis=1, keepdims=True, ord='euclidean')
         dist = self.aux_one - tf.math.divide_no_nan(mult, norm_mult)
-        self.add_metric(dist, aggregation='mean', name="{}_mean".format(self.name))
         return dist
 
 class EuclidianDistanceSquared(Layer):
     def __init__(self, name=None, dtype='float32', **kwargs):
         super(EuclidianDistanceSquared, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
 
-    def call(self, anch, comp):
+    def call(self, inputs):
+        anch, comp = inputs[0], inputs[1]
         dist = tf.square(anch - comp)
         dist = tf.reduce_sum(dist, axis=1, keepdims=True)
-        self.add_metric(dist, aggregation='mean', name="{}_mean".format(self.name))
         return dist
 
 class TripletLoss(Layer):
@@ -170,15 +170,17 @@ class TripletLoss(Layer):
         self.alpha = tf.constant(alpha, dtype=dtype)
         self.aux_zero = tf.constant(0.0, dtype=dtype)
 
-    def call(self, pos_dist, neg_dist):
+    def call(self, inputs):
+        pos_dist, neg_dist = inputs[0], inputs[1]
         tripl = tf.maximum(pos_dist - neg_dist + self.alpha, self.aux_zero)
-        self.add_loss(tripl)
         return tripl
 
 def build_triplet_model(dist_type='eucl', alpha=1.0,
                         vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1,
                         extra_out_layer=None, optimizer=Adamax()):
     extractor_model = build_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx)
+    extractor_model = extractor_model(extra_out_layer) if extra_out_layer is not None else extractor_model
+    #extractor_model = extractor_model(Lambda(lambda x : tf.norm(x, axis=0, keepdims=True, ord='euclidean'))
 
     anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
     anchor_out = extractor_model(anchor_in)
@@ -189,22 +191,21 @@ def build_triplet_model(dist_type='eucl', alpha=1.0,
     neg_in = Input(shape=(224, 224, 3), name="neg_in")
     neg_out = extractor_model(neg_in)
 
-    if extra_out_layer is not None:
-        anchor_out = extra_out_layer(anchor_out)
-        pos_out = extra_out_layer(pos_out)
-        neg_out = extra_out_layer(neg_out)
-
     if dist_type == 'cos':
-        pos_dist = CosineDistance(name="pos_dist")(anchor_out, pos_out)
-        neg_dist = CosineDistance(name="neg_dist")(anchor_out, neg_out)
+        pos_dist = CosineDistance(name="pos_dist")([anchor_out, pos_out])
+        neg_dist = CosineDistance(name="neg_dist")([anchor_out, neg_out])
     else:
-        pos_dist = EuclidianDistanceSquared(name="pos_dist")(anchor_out, pos_out)
-        neg_dist = EuclidianDistanceSquared(name="neg_dist")(anchor_out, neg_out)
+        pos_dist = EuclidianDistanceSquared(name="pos_dist")([anchor_out, pos_out])
+        neg_dist = EuclidianDistanceSquared(name="neg_dist")([anchor_out, neg_out])
 
-    triplet = TripletLoss(alpha=alpha)(pos_dist, neg_dist)
+    triplet = TripletLoss(alpha=alpha)([pos_dist, neg_dist])
 
     triplet_model = Model([anchor_in, pos_in, neg_in], triplet)
-    triplet_model.compile(optimizer=optimizer, loss=None)
+    #triplet_model.add_loss(tf.reduce_mean(triplet))
+    triplet_model.add_metric(pos_dist, aggregation='mean', name="pos_dist_mean")
+    triplet_model.add_metric(neg_dist, aggregation='mean', name="neg_dist_mean")
+
+    triplet_model.compile(optimizer=optimizer, loss=tf.keras.losses.MeanAbsoluteError())
 
     return triplet_model
 
