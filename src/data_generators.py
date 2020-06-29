@@ -58,45 +58,56 @@ def get_bboxs_generator(bboxs_df, imgs_dir="../data/Img_Resize", batch_size=32,
 
 
 
-class FaceTripleGenerator(Sequence):
+def __load_img__(img_path, resize, out_image_size, cv2_inter, cv2_color_BGR2):
+    img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+    img = img if not resize else cv2.resize(img, out_image_size, interpolation=cv2_inter)
+    img = cv2.cvtColor(img, cv2_color_BGR2)
+
+    return img
+
+class TripletTrainGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
-                batch_size=32, out_dtype=np.float32, out_color='rgb',
-                resize=False, cv2_resize_inter=cv2.INTER_LINEAR, out_image_size=(224, 224),
+                batch_n_indvs=4, batch_indv_n_imgs=4,
+                out_dtype=np.float32, out_color='rgb',
+                resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
                 preprocess_func=None):
         self.indvs = indvs_df.groupby(indvs_df.columns[1])
         self.indvs = [np.asarray(imgs.iloc[:, 0]) for _, imgs in self.indvs if len(imgs) >= min_indv_imgs]
         self.__aux_len__ = len(self.indvs)
         self.__aux_indvs_len__ = [len(indv) for indv in self.indvs]
-        self.__aux_zeros__ = np.zeros((batch_size, 1), dtype=out_dtype)
+
+        cv2_color_BGR2 = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
+        self.__load_img_args__ = (resize, out_image_size, cv2_inter, cv2_color_BGR2)
 
         self.imgs_dir = imgs_dir
-        self.batch_size = batch_size
+        self.batch_n_indvs = batch_n_indvs
+        self.batch_indv_n_imgs = batch_indv_n_imgs
         self.out_dtype = out_dtype
-        self.out_color = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
-        self.resize = resize
-        self.cv2_resize_inter = cv2_resize_inter
-        self.out_image_size = out_image_size
         self.preprocess_func = preprocess_func
 
     def __len__(self):
-        return self.__aux_len__
-
-    def __get_random_triple__(self):
-        pos_indv, neg_indv = np.random.choice(self.__aux_len__, size=(2,), replace=False)
-        anchor, pos = np.random.choice(self.__aux_indvs_len__[pos_indv], size=(2,), replace=False)
-        neg = np.random.randint(self.__aux_indvs_len__[neg_indv])
-
-        imgs = [self.indvs[pos_indv][anchor], self.indvs[pos_indv][pos], self.indvs[neg_indv][neg]]
-        imgs = [cv2.imread(os.path.join(self.imgs_dir, img), cv2.IMREAD_COLOR) for img in imgs]
-        imgs = imgs if not self.resize else [cv2.resize(img, self.out_image_size, interpolation=self.cv2_resize_inter) for img in imgs]
-        imgs = [cv2.cvtColor(img, self.out_color) for img in imgs]
-
-        return np.stack(imgs, axis=0)
+        return 1
 
     def __getitem__(self, _):
-        indvs = [self.__get_random_triple__() for _ in range(self.batch_size)]
-        indvs = np.stack(indvs, axis=0).astype(self.out_dtype)
-        indvs = [indvs[:, 0], indvs[:, 1], indvs[:, 2]]
-        indvs = indvs if self.preprocess_func is None else [self.preprocess_func(indv) for indv in indvs]
+        batch_indvs = np.random.choice(self.__aux_len__, size=(self.batch_n_indvs,), replace=False)
 
-        return indvs, self.__aux_zeros__
+        batch_indvs_imgs = [np.random.choice(self.__aux_indvs_len__[indv], size=(self.batch_indv_n_imgs,), replace=False) for indv in batch_indvs]
+        batch_indvs_imgs = [[__load_img__(os.path.join(self.imgs_dir, self.indvs[indv][img]), *self.__load_img_args__)
+                            for img in indv_imgs] for indv, indv_imgs in zip(batch_indvs, batch_indvs_imgs)]
+        batch_indvs_imgs = np.concatenate([np.stack(indv_imgs, axis=0) for indv_imgs in batch_indvs_imgs], axis=0).astype(self.out_dtype)
+        batch_indvs_imgs = batch_indvs_imgs if self.preprocess_func is None else self.preprocess_func(batch_indvs_imgs)
+
+        batch_labels = [np.asarray([label]*self.batch_indv_n_imgs) for label in batch_indvs]
+        batch_labels = np.concatenate(batch_labels, axis=0).astype(np.int32)
+
+        return batch_indvs_imgs, batch_labels
+
+if __name__ == '__main__':
+    import pandas as pd
+    df = pd.read_csv("../data/indvs.csv")
+    gen = TripletTrainGenerator(df, imgs_dir="../data/Img_Crop_Resize")
+    out_dir = os.makedirs("temp", exist_ok=True)
+    imgs, labels = gen.__getitem__(0)
+    print(labels)
+    for i in range(16):
+        cv2.imwrite("temp/{}.jpg".format(i), cv2.cvtColor(imgs[i], cv2.COLOR_RGB2BGR))
