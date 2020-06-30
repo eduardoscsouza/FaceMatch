@@ -122,28 +122,22 @@ def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights
 
         model_dense_0 = Conv2D(4096, (7, 7), padding='valid', name="dense-0")(model)
         model_actv_0 = Activation('relu', name="dense-0_actv")(model_dense_0)
-        model_drop_0 = Dropout(0.4, name="dense-0_drop")(model_actv_0)
+        model_drop_0 = Dropout(0.5, name="dense-0_drop")(model_actv_0)
 
         model_dense_1 = Conv2D(4096, (1, 1), padding='valid', name="dense-1")(model_drop_0)
         model_actv_1 = Activation('relu', name="dense-1_actv")(model_dense_1)
-        model_drop_1 = Dropout(0.4, name="dense-1_drop")(model_actv_1)
+        model_drop_1 = Dropout(0.5, name="dense-1_drop")(model_actv_1)
 
         model_dense_2 = Conv2D(2622, (1, 1), padding='valid', name="dense-2")(model_drop_1)
         model_actv_2 = Activation('softmax', name="dense-2_actv")(model_dense_2)
-        model_out = Flatten(name="output")(model_actv_2)
 
-        vgg_model = Model(model_in, model_out)
+        vgg_model = Model(model_in, model_actv_2)
         vgg_model.load_weights(vgg_weights_filepath)
 
-        extraction_layers = []
-        extraction_layers += [Flatten(name="extract_flat-0")(model_dense_0)]
-        extraction_layers += [Flatten(name="extract_flat-1")(model_actv_0)]
-        extraction_layers += [Flatten(name="extract_flat-2")(model_dense_1)]
-        extraction_layers += [Flatten(name="extract_flat-3")(model_actv_1)]
-        extraction_layers += [Flatten(name="extract_flat-4")(model_dense_2)]
-        extraction_layers += [model_out]
+        extraction_layer = [model_dense_0, model_actv_0, model_dense_1, model_actv_1, model_dense_2, model_actv_2][extraction_layer_indx]
+        extraction_layer = Flatten(name="extract_flat")(extraction_layer)
+        extractor_model = Model(model_in, extraction_layer, name=scope)
 
-        extractor_model = Model(model_in, extraction_layers[extraction_layer_indx], name=scope)
         return extractor_model
 
 
