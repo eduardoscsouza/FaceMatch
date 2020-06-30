@@ -7,8 +7,8 @@ import os
 
 
 def get_bboxs_generator(bboxs_df, imgs_dir="../data/Img_Resize", batch_size=32,
-                    out_image_size=(56, 56), color='rgb', preprocess_func=None,
-                    shuffle=True, seed=None,
+                    out_image_size=(56, 56), resize_inter='bilinear',
+                    color_mode='rgb', rescale=1.0/255.0, preprocess_func=None,
                     gen_args=None, flow_args=None):
 
     if gen_args is None:
@@ -29,7 +29,7 @@ def get_bboxs_generator(bboxs_df, imgs_dir="../data/Img_Resize", batch_size=32,
                         cval=0.0,
                         horizontal_flip=False,
                         vertical_flip=False,
-                        rescale=1.0/255.0,
+                        rescale=rescale,
                         preprocessing_function=preprocess_func,
                         data_format='channels_last',
                         validation_split=0.0,
@@ -37,21 +37,21 @@ def get_bboxs_generator(bboxs_df, imgs_dir="../data/Img_Resize", batch_size=32,
 
     if flow_args is None:
         flow_args = dict(directory=imgs_dir,
-                        x_col="image_id",
+                        x_col=bboxs_df.columns[0],
                         y_col=list(bboxs_df.columns[1:]),
                         weight_col=None,
                         target_size=out_image_size,
-                        color_mode=color,
+                        color_mode=color_mode,
                         classes=None,
                         class_mode='raw',
                         batch_size=batch_size,
-                        shuffle=shuffle,
-                        seed=seed,
+                        shuffle=True,
+                        seed=None,
                         save_to_dir=None,
                         save_prefix='',
                         save_format='jpg',
                         subset=None,
-                        interpolation='bilinear',
+                        interpolation=resize_inter,
                         validate_filenames=True)
 
     return ImageDataGenerator(**gen_args).flow_from_dataframe(bboxs_df, **flow_args)
