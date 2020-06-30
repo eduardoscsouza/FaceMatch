@@ -1,7 +1,8 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten
-from tensorflow.keras.layers import Input, Lambda, Layer, MaxPooling2D, SeparableConv2D
+from tensorflow.keras.layers import Input, Layer, MaxPooling2D, SeparableConv2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
 from tensorflow.keras.optimizers import Adam, Adamax
@@ -92,126 +93,89 @@ def build_bbox_separable_model(input_size=(56, 56, 3),
 
 
 
-def build_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1, name="vgg16_face_extractor"):
-    model_in = Input(shape=(224, 224, 3))
+def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor"):
+    with tf.name_scope(name) as scope:
+        model_in = Input(shape=(224, 224, 3), name="input")
 
-    model = Conv2D(64, (3, 3), padding='same', activation='relu')(model_in)
-    model = Conv2D(64, (3, 3), padding='same', activation='relu')(model)
-    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+        model = Conv2D(64, (3, 3), padding='same', activation='relu', name="block-0_conv_0")(model_in)
+        model = Conv2D(64, (3, 3), padding='same', activation='relu', name="block-0_conv_1")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-0_pool")(model)
 
-    model = Conv2D(128, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(128, (3, 3), padding='same', activation='relu')(model)
-    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+        model = Conv2D(128, (3, 3), padding='same', activation='relu', name="block-1_conv_0")(model)
+        model = Conv2D(128, (3, 3), padding='same', activation='relu', name="block-1_conv_1")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-1_pool")(model)
 
-    model = Conv2D(256, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(256, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(256, (3, 3), padding='same', activation='relu')(model)
-    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+        model = Conv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_0")(model)
+        model = Conv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_1")(model)
+        model = Conv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_2")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-2_pool")(model)
 
-    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
-    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+        model = Conv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_0")(model)
+        model = Conv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_1")(model)
+        model = Conv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_2")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-3_pool")(model)
 
-    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
-    model = Conv2D(512, (3, 3), padding='same', activation='relu')(model)
-    model = MaxPooling2D((2, 2), strides=(2, 2))(model)
+        model = Conv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_0")(model)
+        model = Conv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_1")(model)
+        model = Conv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_2")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-4_pool")(model)
 
-    model_dense_0 = Conv2D(4096, (7, 7), padding='valid', activation='relu')(model)
-    model_dense_0 = Dropout(0.5)(model_dense_0)
+        model_dense_0 = Conv2D(4096, (7, 7), padding='valid', name="dense-0")(model)
+        model_actv_0 = Activation('relu', name="dense-0_actv")(model_dense_0)
+        model_drop_0 = Dropout(0.4, name="dense-0_drop")(model_actv_0)
 
-    model_dense_1 = Conv2D(4096, (1, 1), padding='valid', activation='relu')(model_dense_0)
-    model_dense_1 = Dropout(0.5)(model_dense_1)
+        model_dense_1 = Conv2D(4096, (1, 1), padding='valid', name="dense-1")(model_drop_0)
+        model_actv_1 = Activation('relu', name="dense-1_actv")(model_dense_1)
+        model_drop_1 = Dropout(0.4, name="dense-1_drop")(model_actv_1)
 
-    model_dense_2 = Conv2D(2622, (1, 1), padding='valid')(model_dense_1)
-    model_dense_2 = Flatten()(model_dense_2)
+        model_dense_2 = Conv2D(2622, (1, 1), padding='valid', name="dense-2")(model_drop_1)
+        model_actv_2 = Activation('softmax', name="dense-2_actv")(model_dense_2)
+        model_out = Flatten(name="output")(model_actv_2)
 
-    model_out = Activation('softmax')(model_dense_2)
+        vgg_model = Model(model_in, model_out)
+        vgg_model.load_weights(vgg_weights_filepath)
 
-    vgg_model = Model(model_in, model_out)
-    vgg_model.load_weights(vgg_weights_filepath)
+        extraction_layers = []
+        extraction_layers += [Flatten(name="extract_flat-0")(model_dense_0)]
+        extraction_layers += [Flatten(name="extract_flat-1")(model_actv_0)]
+        extraction_layers += [Flatten(name="extract_flat-2")(model_dense_1)]
+        extraction_layers += [Flatten(name="extract_flat-3")(model_actv_1)]
+        extraction_layers += [Flatten(name="extract_flat-4")(model_dense_2)]
+        extraction_layers += [model_out]
 
-    extraction_layers = []
-    extraction_layers += [Flatten()(model_dense_0)]
-    extraction_layers += [Flatten()(model_dense_1)]
-    extraction_layers += [model_dense_2]
-    extractor_model = Model(model_in, extraction_layers[extraction_layer_indx], name=name)
+        extractor_model = Model(model_in, extraction_layers[extraction_layer_indx], name=scope)
+        return extractor_model
 
+
+
+class L2Normalization(Layer):
+    def __init__(self, name=None, **kwargs):
+        super(L2Normalization, self).__init__(name=name, trainable=False, **kwargs)
+
+    def call(self, x):
+        return tf.math.l2_normalize(x, axis=1)
+
+def add_l2_norm(extractor_model):
+    with tf.name_scope(extractor_model.name) as scope:
+        l2_norm = L2Normalization(name="l2_normalization")(extractor_model.output)
+        return Model(extractor_model.input, l2_norm, name=scope)
+
+def build_vgg16_triplet_training_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor"):
+    extractor_model = build_vgg16_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx, name=name)
+    return add_l2_norm(extractor_model)
+
+def build_triplet_training_model(extractor_model, dist_type='eucl', alpha=1.0, optimizer=Adamax()):
+    triplet_loss = tfa.losses.TripletSemiHardLoss(margin=alpha, distance_metric='angular' if (dist_type=='cos') else 'L2', name="triplet_loss")
+    extractor_model.compile(optimizer=optimizer, loss=triplet_loss)
     return extractor_model
 
 
 
-class CosineDistance(Layer):
-    def __init__(self, name=None, dtype='float32', **kwargs):
-        super(CosineDistance, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
-        self.aux_one = tf.constant(1.0, dtype=dtype)
-
-    def call(self, inputs):
-        anch, comp = inputs[0], inputs[1]
-        mult = tf.reduce_sum(anch * comp, axis=1, keepdims=True)
-        norm_mult = tf.norm(anch, axis=1, keepdims=True, ord='euclidean') * tf.norm(comp, axis=1, keepdims=True, ord='euclidean')
-        dist = self.aux_one - tf.math.divide_no_nan(mult, norm_mult)
-        return dist
-
-class EuclidianDistanceSquared(Layer):
-    def __init__(self, name=None, dtype='float32', **kwargs):
-        super(EuclidianDistanceSquared, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
-
-    def call(self, inputs):
-        anch, comp = inputs[0], inputs[1]
-        dist = tf.square(anch - comp)
-        dist = tf.reduce_sum(dist, axis=1, keepdims=True)
-        return dist
-
-class TripletLoss(Layer):
-    def __init__(self, alpha=0.5, name=None, dtype='float32', **kwargs):
-        super(TripletLoss, self).__init__(name=name, dtype=dtype, trainable=False, **kwargs)
-        self.alpha = tf.constant(alpha, dtype=dtype)
-        self.aux_zero = tf.constant(0.0, dtype=dtype)
-
-    def call(self, inputs):
-        pos_dist, neg_dist = inputs[0], inputs[1]
-        tripl = tf.maximum(pos_dist - neg_dist + self.alpha, self.aux_zero)
-        return tripl
-
-def build_triplet_model(dist_type='eucl', alpha=1.0,
-                        vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=1,
-                        extra_out_layer=None, optimizer=Adamax()):
-    extractor_model = build_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx)
-    extractor_model = extractor_model(extra_out_layer) if extra_out_layer is not None else extractor_model
-    #extractor_model = extractor_model(Lambda(lambda x : tf.norm(x, axis=0, keepdims=True, ord='euclidean'))
-
-    anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
-    anchor_out = extractor_model(anchor_in)
-
-    pos_in = Input(shape=(224, 224, 3), name="pos_in")
-    pos_out = extractor_model(pos_in)
-
-    neg_in = Input(shape=(224, 224, 3), name="neg_in")
-    neg_out = extractor_model(neg_in)
-
-    if dist_type == 'cos':
-        pos_dist = CosineDistance(name="pos_dist")([anchor_out, pos_out])
-        neg_dist = CosineDistance(name="neg_dist")([anchor_out, neg_out])
-    else:
-        pos_dist = EuclidianDistanceSquared(name="pos_dist")([anchor_out, pos_out])
-        neg_dist = EuclidianDistanceSquared(name="neg_dist")([anchor_out, neg_out])
-
-    triplet = TripletLoss(alpha=alpha)([pos_dist, neg_dist])
-
-    triplet_model = Model([anchor_in, pos_in, neg_in], triplet)
-    #triplet_model.add_loss(tf.reduce_mean(triplet))
-    triplet_model.add_metric(pos_dist, aggregation='mean', name="pos_dist_mean")
-    triplet_model.add_metric(neg_dist, aggregation='mean', name="neg_dist_mean")
-
-    triplet_model.compile(optimizer=optimizer, loss=tf.keras.losses.MeanAbsoluteError())
-
-    return triplet_model
-
-
-
 if __name__ == '__main__':
+    m = build_vgg16_triplet_training_extractor()
+    m.summary()
+
+    '''
     import numpy as np
 
     n_samples, n_feats = 1000, 256
@@ -285,7 +249,6 @@ if __name__ == '__main__':
     tf.keras.backend.clear_session()
     gc.collect()
 
-    '''
     tf.keras.backend.clear_session()
     model = build_triplet_model(dist_type='cos', alpha=alpha)
     model.compile()
