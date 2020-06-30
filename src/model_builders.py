@@ -154,7 +154,7 @@ def add_l2_norm(extractor_model):
         l2_norm = L2Normalization(name="l2_normalization")(extractor_model.output)
         return Model(extractor_model.input, l2_norm, name=scope)
 
-def build_vgg16_triplet_training_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor"):
+def build_vgg16_triplet_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor"):
     extractor_model = build_vgg16_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx, name=name)
     return add_l2_norm(extractor_model)
 

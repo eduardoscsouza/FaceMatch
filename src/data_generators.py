@@ -75,6 +75,7 @@ class TripletTrainGenerator(Sequence):
         self.indvs = [np.asarray(imgs.iloc[:, 0]) for _, imgs in self.indvs if len(imgs) >= min_indv_imgs]
         self.__aux_len__ = len(self.indvs)
         self.__aux_indvs_len__ = [len(indv) for indv in self.indvs]
+        self.__len_out__ = np.sum(self.__aux_indvs_len__)
 
         cv2_color_BGR2 = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
         self.__load_img_args__ = (resize, out_image_size, cv2_inter, cv2_color_BGR2)
@@ -86,7 +87,7 @@ class TripletTrainGenerator(Sequence):
         self.preprocess_func = preprocess_func
 
     def __len__(self):
-        return 1
+        return self.__len_out__
 
     def __getitem__(self, _):
         batch_indvs = np.random.choice(self.__aux_len__, size=(self.batch_n_indvs,), replace=False)

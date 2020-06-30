@@ -47,10 +47,12 @@ imgs_dir = os.path.join(data_dir, "Img_Crop_Resize/")
 vgg_weights_filepath = os.path.join(data_dir, "vgg_face_weights.h5")
 
 train_df, val_df, _ = get_train_val_test_dfs(indvs_csv, splits_csv)
-gen_kwargs = dict(min_indv_imgs=5, imgs_dir=imgs_dir,
-                batch_size=8, out_dtype=np.float32, out_color='rgb',
-                resize=False, cv2_resize_inter=cv2.INTER_LINEAR, out_image_size=(224, 224),
+gen_args = dict(min_indv_imgs=5, imgs_dir=imgs_dir,
+                batch_n_indvs=4, batch_indv_n_imgs=4,
+                out_dtype=np.float32, out_color='rgb',
+                resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
                 preprocess_func=vgg16.preprocess_input)
+
 for dist in ['eucl', 'cos']:
     exp_name = "dist-{}".format(dist)
     aux_exp_dir = os.path.join(results_dir, exp_name)
@@ -61,21 +63,22 @@ for dist in ['eucl', 'cos']:
         if os.path.isdir(aux_tensorboard_dir):
             shutil.rmtree(aux_tensorboard_dir)
 
-        train_datagen = FaceTripleGenerator(train_df, **gen_kwargs)
-        val_datagen = FaceTripleGenerator(val_df, **gen_kwargs)
+        train_datagen = TripletTrainGenerator(train_df, **gen_args)
+        val_datagen = TripletTrainGenerator(val_df, **gen_args)
         gc.collect()
 
-        model = build_triplet_model(dist_type=dist, alpha=1.0,
-                                    vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=1,
-                                    extra_out_layer=None, optimizer=Adamax())
+        vgg16_extractor = build_vgg16_triplet_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=3)
+        model = build_triplet_training_model(vgg16_extractor, dist_type=dist, alpha=1.0, optimizer=Adamax())
         model.summary()
 
         run_experiment(model, exp_name, train_datagen, val_datagen,
-                    epochs=200, steps_per_epoch=50, validation_steps=10,
+                    epochs=1000, steps_per_epoch=100, validation_steps=50,
                     results_dir=results_dir, tensorboard_logdir=tensorboard_dir,
-                    best_model_metric="val_loss",earlystop_metric="loss",
-                    earlystop_min_delta=0.01, early_stop_patience=20,
-                    evaluation_steps=250)
+                    best_model_metric="val_loss", best_model_metric_mode='min',
+                    earlystop_metric="loss", earlystop_metric_mode='min',
+                    earlystop_min_delta=0.001, early_stop_patience=80,
+                    generator_queue_size=15, generator_workers=1,
+                    evaluation_steps=500)
 
         del train_datagen, val_datagen, model
         gc.collect()
