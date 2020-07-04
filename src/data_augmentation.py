@@ -24,9 +24,39 @@ def translate_face_randomly(img, bbox):
 
     return img
 
+def rotate_face_randomly(img, bbox):
+    rows, cols = img.shape[:2]
+
+    cx = (cols*bbox[0] + cols*bbox[2]) / 2
+    cy = (rows*bbox[1] + rows*bbox[3]) / 2
+
+    M = cv2.getRotationMatrix2D((cx, cy), random.uniform(-45, 45), 1) 
+
+    img = cv2.warpAffine(img, M, (cols, rows))
+
+    p1 = [[bbox[0]*cols], [bbox[1]*rows], [1]]
+    p2 = [[bbox[2]*cols], [bbox[1]*rows], [1]]
+    p3 = [[bbox[0]*cols], [bbox[3]*rows], [1]]
+    p4 = [[bbox[2]*cols], [bbox[3]*rows], [1]]
+
+    p1 = np.matmul(M, p1).flatten().astype(int)
+    p2 = np.matmul(M, p2).flatten().astype(int)
+    p3 = np.matmul(M, p3).flatten().astype(int)
+    p4 = np.matmul(M, p4).flatten().astype(int)
+
+    mn_x = min(p1[0], p2[0], p3[0], p4[0])
+    mn_y = min(p1[1], p2[1], p3[0], p4[0])
+    mx_x = max(p1[0], p2[0], p3[0], p4[0])
+    mx_y = max(p1[1], p2[1], p3[1], p4[1])
+
+    cv2.rectangle(img, (int(bbox[0]*cols), int(bbox[1]*rows)), (int(bbox[2]*cols), int(bbox[3]*rows)), (0, 255, 0), 2)
+    cv2.rectangle(img, (mn_x, mn_x), (mx_x, mx_y), (255, 0, 0), 2)
+
+    return img
+
 img = cv2.imread('../sample_imgs/raw/000001.jpg')
 bbox = [0.23227383863080683,0.10334788937409024,0.784841075794621,0.5589519650655022]
 
-img = translate_face_randomly(img, bbox)
+img = rotate_face_randomly(img, bbox)
 cv2.imshow('bla', img)
 cv2.waitKey()
