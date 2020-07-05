@@ -15,6 +15,7 @@ def translate_face_randomly(img, bbox):
     M = np.float32([[1, 0, tx], [0, 1, ty]])
 
     img = cv2.warpAffine(img, M, (cols, rows))
+    print(type(img))
 
     x1 = int(bbox[0]*cols + tx)
     y1 = int(bbox[1]*rows + ty)
@@ -54,9 +55,13 @@ def rotate_face_randomly(img, bbox):
 
     return img
 
+def apply_transformation_to_images(images, bboxes, transformation):
+    images = [transformation(img, bbox) for img, bbox in zip(images, bboxs)]
+    return images
+
 img = cv2.imread('../sample_imgs/raw/000001.jpg')
 bbox = [0.23227383863080683,0.10334788937409024,0.784841075794621,0.5589519650655022]
 
-img = rotate_face_randomly(img, bbox)
+img = translate_face_randomly(img, bbox)
 cv2.imshow('bla', img)
 cv2.waitKey()
