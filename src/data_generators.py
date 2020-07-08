@@ -65,22 +65,30 @@ def __load_img__(img_path, resize, out_image_size, cv2_inter, cv2_color_BGR2):
 
     return img
 
+def __get_indvs__(indvs_df, min_indv_imgs, imgs_dir):
+    indvs = indvs_df.groupby(indvs_df.columns[1])
+    indvs = [imgs.iloc[:, 0] for _, imgs in indvs if len(imgs) >= min_indv_imgs]
+    indvs = [np.asarray([os.path.join(imgs_dir, img) for img in imgs]) for imgs in indvs]
+
+    aux_len = len(indvs)
+    aux_indvs_len = [len(indv) for indv in indvs]
+    len_out = np.sum(aux_indvs_len)
+
+    return indvs, aux_len, aux_indvs_len, len_out
+
+def __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
+    cv2_color_BGR2 = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
+    return (resize, out_image_size, cv2_inter, cv2_color_BGR2)
+
 class TripletTrainGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_n_indvs=4, batch_indv_n_imgs=4,
                 out_dtype=np.float32, out_color='rgb',
                 resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
                 preprocess_func=None):
-        self.indvs = indvs_df.groupby(indvs_df.columns[1])
-        self.indvs = [np.asarray(imgs.iloc[:, 0]) for _, imgs in self.indvs if len(imgs) >= min_indv_imgs]
-        self.__aux_len__ = len(self.indvs)
-        self.__aux_indvs_len__ = [len(indv) for indv in self.indvs]
-        self.__len_out__ = np.sum(self.__aux_indvs_len__)
+        self.indvs, self.__aux_len__, self.__aux_indvs_len__, self.__len_out__ = __get_indvs__(indvs_df, min_indv_imgs, imgs_dir)
+        self.__load_img_args__ = __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
 
-        cv2_color_BGR2 = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
-        self.__load_img_args__ = (resize, out_image_size, cv2_inter, cv2_color_BGR2)
-
-        self.imgs_dir = imgs_dir
         self.batch_n_indvs = batch_n_indvs
         self.batch_indv_n_imgs = batch_indv_n_imgs
         self.out_dtype = out_dtype
@@ -93,8 +101,8 @@ class TripletTrainGenerator(Sequence):
         batch_indvs = np.random.choice(self.__aux_len__, size=(self.batch_n_indvs,), replace=False)
 
         batch_indvs_imgs = [np.random.choice(self.__aux_indvs_len__[indv], size=(self.batch_indv_n_imgs,), replace=False) for indv in batch_indvs]
-        batch_indvs_imgs = [[__load_img__(os.path.join(self.imgs_dir, self.indvs[indv][img]), *self.__load_img_args__)
-                            for img in indv_imgs] for indv, indv_imgs in zip(batch_indvs, batch_indvs_imgs)]
+        batch_indvs_imgs = [[__load_img__(self.indvs[indv][img], *self.__load_img_args__) for img in indv_imgs]
+                            for indv, indv_imgs in zip(batch_indvs, batch_indvs_imgs)]
         batch_indvs_imgs = np.concatenate([np.stack(indv_imgs, axis=0) for indv_imgs in batch_indvs_imgs], axis=0).astype(self.out_dtype)
         batch_indvs_imgs = batch_indvs_imgs if self.preprocess_func is None else self.preprocess_func(batch_indvs_imgs)
 
@@ -102,6 +110,42 @@ class TripletTrainGenerator(Sequence):
         batch_labels = np.concatenate(batch_labels, axis=0).astype(np.int32)
 
         return batch_indvs_imgs, batch_labels
+
+class TripletEvalGenerator(Sequence):
+    def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
+                batch_size=32,
+                out_dtype=np.float32, out_color='rgb',
+                resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
+                preprocess_func=None):
+        self.indvs, self.__aux_len__, self.__aux_indvs_len__, self.__len_out__ = __get_indvs__(indvs_df, min_indv_imgs, imgs_dir)
+        self.__load_img_args__ = __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
+
+        self.batch_size = batch_size
+        self.out_dtype = out_dtype
+        self.preprocess_func = preprocess_func
+
+    def __len__(self):
+        return self.__len_out__
+
+    def __get_random_triple__(self):
+        pos_indv, neg_indv = np.random.choice(self.__aux_len__, size=(2,), replace=False)
+        anchor, pos = np.random.choice(self.__aux_indvs_len__[pos_indv], size=(2,), replace=False)
+        neg = np.random.randint(self.__aux_indvs_len__[neg_indv])
+
+        imgs = [self.indvs[pos_indv][anchor], self.indvs[pos_indv][pos], self.indvs[neg_indv][neg]]
+        imgs = [__load_img__(img, *self.__load_img_args__) for img in imgs]
+
+        return np.stack(imgs, axis=0)
+
+    def __getitem__(self, _):
+        indvs = [self.__get_random_triple__() for _ in range(self.batch_size)]
+        indvs = np.stack(indvs, axis=0).astype(self.out_dtype)
+        indvs = [indvs[:, 0], indvs[:, 1], indvs[:, 2]]
+        indvs = indvs if self.preprocess_func is None else [self.preprocess_func(indv) for indv in indvs]
+
+        return indvs
+
+
 
 if __name__ == '__main__':
     import pandas as pd
