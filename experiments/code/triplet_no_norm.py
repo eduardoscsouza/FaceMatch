@@ -67,7 +67,7 @@ for dist in ['eucl', 'cos']:
         val_datagen = TripletTrainGenerator(val_df, **gen_args)
         gc.collect()
 
-        vgg16_extractor = build_vgg16_triplet_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=3)
+        vgg16_extractor = build_vgg16_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=3)
         model = build_triplet_training_model(vgg16_extractor, dist_type=dist, alpha=1.0, optimizer=Adamax())
         model.summary()
 
