@@ -77,7 +77,7 @@ for dist in ['eucl', 'cos']:
                     best_model_metric="val_loss", best_model_metric_mode='min',
                     earlystop_metric="loss", earlystop_metric_mode='min',
                     earlystop_min_delta=0.0005, early_stop_patience=80,
-                    generator_queue_size=20, generator_workers=4,
+                    generator_queue_size=20, generator_workers=4, use_multiprocessing=True,
                     evaluation_steps=2000)
 
         del train_datagen, val_datagen, model

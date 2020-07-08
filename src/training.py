@@ -72,7 +72,7 @@ def combine_train_val_dfs(train_df, val_df):
 
 def run_experiment(model, exp_name, train_datagen, val_datagen,
                 results_dir="../experiments/results",
-                epochs=1000, steps_per_epoch=200, validation_steps=100,
+                epochs=1000, steps_per_epoch=200, validation_steps=50,
                 tensorboard_logdir="../experiments/tensorboard_logs",
                 best_model_metric="val_mean_bbox_iou", best_model_metric_mode='max',
                 earlystop_metric="loss", earlystop_metric_mode='min', earlystop_min_delta=0.001, early_stop_patience=80,
