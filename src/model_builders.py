@@ -144,7 +144,8 @@ def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights
 
 class L2Normalization(Layer):
     def __init__(self, name=None, **kwargs):
-        super(L2Normalization, self).__init__(name=name, trainable=False, **kwargs)
+        kwargs.update({"trainable":False})
+        super(L2Normalization, self).__init__(name=name, **kwargs)
 
     def call(self, x):
         return tf.math.l2_normalize(x, axis=1)
@@ -165,11 +166,79 @@ def build_triplet_training_model(extractor_model, dist_type='eucl', alpha=1.0, o
 
 
 
+class CosineDistance(Layer):
+    def __init__(self, name=None, dtype='float32', **kwargs):
+        kwargs.update({"trainable":False})
+        super(CosineDistance, self).__init__(name=name, dtype=dtype, **kwargs)
+        self.aux_one = tf.constant(1.0, dtype=dtype)
+
+    def call(self, inputs):
+        anch, comp = inputs[0], inputs[1]
+        mult = tf.reduce_sum(anch * comp, axis=1, keepdims=True)
+        norm_mult = tf.norm(anch, axis=1, keepdims=True, ord='euclidean') * tf.norm(comp, axis=1, keepdims=True, ord='euclidean')
+        dist = self.aux_one - tf.math.divide_no_nan(mult, norm_mult)
+        return dist
+
+class EuclidianDistanceSquared(Layer):
+    def __init__(self, name=None, dtype='float32', **kwargs):
+        kwargs.update({"trainable":False})
+        super(EuclidianDistanceSquared, self).__init__(name=name, dtype=dtype, **kwargs)
+
+    def call(self, inputs):
+        anch, comp = inputs[0], inputs[1]
+        dist = tf.reduce_sum(tf.square(anch - comp), axis=1, keepdims=True)
+        return dist
+
+class TripletLoss(Layer):
+    def __init__(self, alpha=1.0, name=None, dtype='float32', **kwargs):
+        kwargs.update({"trainable":False})
+        super(TripletLoss, self).__init__(name=name, dtype=dtype, **kwargs)
+        self.alpha = tf.constant(alpha, dtype=dtype)
+        self.aux_zero = tf.constant(0.0, dtype=dtype)
+
+    def call(self, inputs):
+        pos_dist, neg_dist = inputs[0], inputs[1]
+        tripl = tf.maximum(pos_dist - neg_dist + self.alpha, self.aux_zero)
+        return tripl
+
+    def get_config(self):
+        return {"alpha":float(self.alpha)}
+
+def build_triplet_evaluation_model(extractor_model, dist_type='eucl', alpha=1.0, add_loss=False):
+    anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
+    anchor_out = extractor_model(anchor_in)
+
+    pos_in = Input(shape=(224, 224, 3), name="pos_in")
+    pos_out = extractor_model(pos_in)
+
+    neg_in = Input(shape=(224, 224, 3), name="neg_in")
+    neg_out = extractor_model(neg_in)
+
+    if dist_type == 'cos':
+        pos_dist = CosineDistance(name="pos_dist")([anchor_out, pos_out])
+        neg_dist = CosineDistance(name="neg_dist")([anchor_out, neg_out])
+    else:
+        pos_dist = EuclidianDistanceSquared(name="pos_dist")([anchor_out, pos_out])
+        neg_dist = EuclidianDistanceSquared(name="neg_dist")([anchor_out, neg_out])
+
+    triplet = TripletLoss(alpha=alpha)([pos_dist, neg_dist])
+    triplet_model = Model([anchor_in, pos_in, neg_in], triplet)
+    triplet_model.add_metric(pos_dist, aggregation='mean', name="pos_dist_mean")
+    triplet_model.add_metric(neg_dist, aggregation='mean', name="neg_dist_mean")
+    if add_loss:
+        triplet_model.add_loss(triplet)
+    else:
+        triplet_model.add_metric(triplet, aggregation='mean', name="triplet_loss_mean")
+
+    triplet_model.compile(optimizer=Adamax(), loss=None)
+    return triplet_model
+
+
+
 if __name__ == '__main__':
-    m = build_vgg16_triplet_training_extractor()
+    m = build_triplet_training_model(build_vgg16_triplet_extractor())
     m.summary()
 
-    '''
     import numpy as np
 
     n_samples, n_feats = 1000, 256
@@ -182,7 +251,7 @@ if __name__ == '__main__':
 
     in_1 = Input(shape=(n_feats,))
     in_2 = Input(shape=(n_feats,))
-    out = CosineDistance()(in_1, in_2)
+    out = CosineDistance()([in_1, in_2])
     model = Model([in_1, in_2], out)
     assert np.allclose(model.predict([a, b])[:, 0], correct)
 
@@ -193,7 +262,7 @@ if __name__ == '__main__':
 
     in_1 = Input(shape=(n_feats,))
     in_2 = Input(shape=(n_feats,))
-    out = EuclidianDistanceSquared()(in_1, in_2)
+    out = EuclidianDistanceSquared()([in_1, in_2])
     model = Model([in_1, in_2], out)
     assert np.allclose(model.predict([a, b])[:, 0], correct)
 
@@ -213,36 +282,86 @@ if __name__ == '__main__':
     n_samples = len(imgs)
     split_size = n_samples//3
     alpha = np.random.random((1,)).astype(np.float32)[0]
-    a, b, c = imgs[:split_size], imgs[split_size:2*split_size], imgs[2*split_size:]
+    a, b, c = imgs[:split_size], imgs[split_size:2*split_size], imgs[2*split_size:3*split_size]
 
     for extraction_layer_indx in range(3):
-        extractor_model = build_feature_extractor(extraction_layer_indx=extraction_layer_indx)
+        extractor_model = build_vgg16_triplet_extractor(extraction_layer_indx=extraction_layer_indx)
         p_a, p_b, p_c = extractor_model.predict(a), extractor_model.predict(b), extractor_model.predict(c)
 
         correct = np.empty(split_size, dtype=np.float32)
+        correct_dp = np.empty(split_size, dtype=np.float32)
+        correct_dn = np.empty(split_size, dtype=np.float32)
         for i in range(split_size):
             aux_a, aux_b, aux_c = p_a[i], p_b[i], p_c[i]
             d_p = np.square(np.linalg.norm(aux_a-aux_b))
             d_n = np.square(np.linalg.norm(aux_a-aux_c))
             correct[i] = np.maximum(d_p - d_n + alpha, 0)
+            correct_dp[i] = d_p
+            correct_dn[i] = d_n
+        correct_dp = np.sum(correct_dp) / len(correct_dp)
+        correct_dn = np.sum(correct_dn) / len(correct_dn)
+        correct_tr = np.sum(correct) / len(correct)
 
-        model = build_triplet_model(dist_type='eucl', alpha=alpha, extraction_layer_indx=extraction_layer_indx)
+        model = build_triplet_evaluation_model(extractor_model, dist_type='eucl', alpha=alpha)
+        pos_dist, neg_dist, triplet = model.evaluate([a, b, c])[1:]
         assert np.allclose(model.predict([a, b, c])[:, 0], correct, rtol=0.000316228, atol=1e-06)
+        assert np.allclose(pos_dist, correct_dp)
+        assert np.allclose(neg_dist, correct_dn)
+        assert np.allclose(triplet, correct_tr)
 
         correct = np.empty(split_size, dtype=np.float32)
+        correct_dp = np.empty(split_size, dtype=np.float32)
+        correct_dn = np.empty(split_size, dtype=np.float32)
         for i in range(split_size):
             aux_a, aux_b, aux_c = p_a[i], p_b[i], p_c[i]
             d_p = 1.0 - (np.sum(aux_a*aux_b) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_b)))
             d_n = 1.0 - (np.sum(aux_a*aux_c) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_c)))
             correct[i] = np.maximum(d_p - d_n + alpha, 0)
+            correct_dp[i] = d_p
+            correct_dn[i] = d_n
+        correct_dp = np.sum(correct_dp) / len(correct_dp)
+        correct_dn = np.sum(correct_dn) / len(correct_dn)
+        correct_tr = np.sum(correct) / len(correct)
 
-        model = build_triplet_model(dist_type='cos', alpha=alpha, extraction_layer_indx=extraction_layer_indx)
+        model = build_triplet_evaluation_model(extractor_model, dist_type='cos', alpha=alpha)
+        pos_dist, neg_dist, triplet = model.evaluate([a, b, c])[1:]
         assert np.allclose(model.predict([a, b, c])[:, 0], correct, rtol=0.000316228, atol=1e-06)
+        assert np.allclose(pos_dist, correct_dp)
+        assert np.allclose(neg_dist, correct_dn)
+        assert np.allclose(triplet, correct_tr)
+
         del extractor_model, p_a, p_b, p_c
     del correct, in_1, in_2, out, model
     tf.keras.backend.clear_session()
     gc.collect()
 
+    from tempfile import NamedTemporaryFile
+    from tensorflow.keras.models import load_model
+
+    with NamedTemporaryFile(suffix=".h5") as temp_file:
+        temp_filename = temp_file.name
+        for extraction_layer_indx in range(3):
+            for dist_type in ['eucl', 'cos']:
+                alpha = np.random.random((1,)).astype(np.float32)[0]
+                extractor_model = build_vgg16_triplet_extractor(extraction_layer_indx=extraction_layer_indx)
+                for add_loss in [True, False]:
+                    model = build_triplet_evaluation_model(extractor_model, dist_type=dist_type, alpha=alpha, add_loss=add_loss)
+                    model.save_weights(temp_filename)
+                    model.load_weights(temp_filename)
+                    model.save(temp_filename)
+                    model = load_model(temp_filename, custom_objects={'L2Normalization':L2Normalization,
+                    'CosineDistance':CosineDistance, 'EuclidianDistanceSquared':EuclidianDistanceSquared, 'TripletLoss':TripletLoss})
+                    tf.keras.backend.clear_session()
+
+                model = build_triplet_training_model(extractor_model, dist_type=dist_type, alpha=alpha, optimizer=Adamax())
+                model.save_weights(temp_filename)
+                model.load_weights(temp_filename)
+                model.save(temp_filename)
+                model = load_model(temp_filename, custom_objects={'L2Normalization':L2Normalization,
+                'CosineDistance':CosineDistance, 'EuclidianDistanceSquared':EuclidianDistanceSquared, 'TripletLoss':TripletLoss})
+                tf.keras.backend.clear_session()
+
+    '''
     tf.keras.backend.clear_session()
     model = build_triplet_model(dist_type='cos', alpha=alpha)
     model.compile()

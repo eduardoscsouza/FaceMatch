@@ -111,6 +111,8 @@ class TripletTrainGenerator(Sequence):
 
         return batch_indvs_imgs, batch_labels
 
+
+
 class TripletEvalGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_size=32,
