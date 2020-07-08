@@ -149,7 +149,45 @@ class TripletEvalGenerator(Sequence):
 
 
 
+class TripletClassifierGenerator(Sequence):
+    def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
+                batch_size=32,
+                out_dtype=np.float32, out_color='rgb',
+                resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
+                preprocess_func=None):
+        self.indvs, self.__aux_len__, self.__aux_indvs_len__, self.__len_out__ = __get_indvs__(indvs_df, min_indv_imgs, imgs_dir)
+        self.__load_img_args__ = __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
+
+        self.batch_size = batch_size
+        self.out_dtype = out_dtype
+        self.preprocess_func = preprocess_func
+
+    def __len__(self):
+        return self.__len_out__
+
+    def __getitem__(self, _):
+        labels = np.random.randint(2, size=self.batch_size)
+
+        indvs = np.random.randint(self.__aux_len__, size=self.batch_size)
+        indvs = [[indv, indv] if label else np.random.choice(self.__aux_len__, size=(2,), replace=False) for indv, label in zip(indvs, labels)]
+
+        imgs = [np.random.choice(self.__aux_indvs_len__[indv[0]], size=(2,), replace=False) if label else
+            [np.random.randint(self.__aux_indvs_len__[indv[0]]), np.random.randint(self.__aux_indvs_len__[indv[1]])]
+            for indv, label in zip(indvs, labels)]
+        imgs = [[__load_img__(self.indvs[indv[0]][img[0]], *self.__load_img_args__),
+                __load_img__(self.indvs[indv[1]][img[1]], *self.__load_img_args__)]
+                for indv, img in zip(indvs, imgs)]
+
+        indvs = np.stack([np.stack(img, axis=0) for img in imgs], axis=0).astype(self.out_dtype)
+        indvs = [indvs[:, 0], indvs[:, 1]]
+        indvs = indvs if self.preprocess_func is None else [self.preprocess_func(indv) for indv in indvs]
+
+        return indvs, labels
+
+
+
 if __name__ == '__main__':
+    import shutil
     import pandas as pd
     df = pd.read_csv("../data/indvs.csv")
     imgs_dir = "../data/Img_Crop_Resize"
@@ -157,6 +195,7 @@ if __name__ == '__main__':
     out_dir = "temp_1"
     os.makedirs(out_dir, exist_ok=True)
     gen = TripletTrainGenerator(df, imgs_dir=imgs_dir)
+    print(gen.__len__())
     imgs, labels = gen.__getitem__(0)
     print(labels)
     for i in range(16):
@@ -165,7 +204,38 @@ if __name__ == '__main__':
     out_dir = "temp_2"
     os.makedirs(out_dir, exist_ok=True)
     gen = TripletEvalGenerator(df, imgs_dir=imgs_dir)
+    print(gen.__len__())
     imgs = gen.__getitem__(0)
     for i in range(32):
         for j in range(3):
             cv2.imwrite("{}/{}-{}.jpg".format(out_dir, i, j), cv2.cvtColor(imgs[j][i], cv2.COLOR_RGB2BGR))
+
+    out_dir = "temp_3"
+    if os.path.isdir(out_dir):
+        shutil.rmtree(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
+    gen = TripletClassifierGenerator(df, imgs_dir=imgs_dir)
+    print(gen.__len__())
+    imgs, labels = gen.__getitem__(0)
+    print(len(imgs), imgs[0].shape, imgs[1].shape)
+    for i in range(32):
+        for j in range(2):
+            cv2.imwrite("{}/{}-{}-{}.jpg".format(out_dir, i, j, labels[i]), cv2.cvtColor(imgs[j][i], cv2.COLOR_RGB2BGR))
+
+    from time import time
+    n_tests = 100
+
+    gen = TripletTrainGenerator(df, imgs_dir=imgs_dir, batch_n_indvs=6, batch_indv_n_imgs=4)
+    t0 = time()
+    _ = [gen.__getitem__(0) for _ in range(n_tests)]
+    print(time() - t0)
+
+    gen = TripletEvalGenerator(df, imgs_dir=imgs_dir, batch_size=8)
+    t0 = time()
+    _ = [gen.__getitem__(0) for _ in range(n_tests)]
+    print(time() - t0)
+
+    gen = TripletClassifierGenerator(df, imgs_dir=imgs_dir, batch_size=12)
+    t0 = time()
+    _ = [gen.__getitem__(0) for _ in range(n_tests)]
+    print(time() - t0)
