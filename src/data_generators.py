@@ -80,6 +80,45 @@ def __get_load_img_args__(out_color, resize, out_image_size, cv2_inter):
     cv2_color_BGR2 = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
     return (resize, out_image_size, cv2_inter, cv2_color_BGR2)
 
+def normalize_255(imgs):
+    return imgs / 255.0
+
+
+
+class BBoxsGenerator(Sequence):
+    def __init__(self, bboxs_df, imgs_dir="../data/Img_Resize",
+                batch_size=32,
+                out_dtype=np.float32, out_color='rgb',
+                resize=False, out_image_size=(56, 56), cv2_inter=cv2.INTER_LINEAR,
+                preprocess_func=normalize_255):
+        self.imgs = np.asarray([os.path.join(imgs_dir, img) for img in bboxs_df.iloc[:, 0]])
+        self.labels = np.asarray(bboxs_df.iloc[:, 1:], dtype=np.float64 if (out_dtype==np.float64) else np.float32)
+        self.__aux_len__ = len(self.imgs)
+        self.__len_out__ = (len(self.imgs) // batch_size) - 1
+
+        self.ord = np.random.permutation(self.__aux_len__)
+        self.__load_img_args__ = __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
+
+        self.batch_size = batch_size
+        self.out_dtype = out_dtype
+        self.preprocess_func = preprocess_func
+
+    def __len__(self):
+        return self.__len_out__
+
+    def __getitem__(self, index):
+        cut = self.ord[self.batch_size*index:self.batch_size*(index+1)]
+
+        batch_imgs = [__load_img__(img, *self.__load_img_args__) for img in self.imgs[cut]]
+        batch_imgs = np.stack(batch_imgs, axis=0).astype(self.out_dtype)
+        batch_imgs = batch_imgs if self.preprocess_func is None else self.preprocess_func(batch_imgs)
+
+        batch_labels = self.labels[cut]
+
+        return batch_imgs, batch_labels
+
+
+
 class TripletTrainGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_n_indvs=4, batch_indv_n_imgs=4,
@@ -236,6 +275,11 @@ if __name__ == '__main__':
     print(time() - t0)
 
     gen = TripletClassifierGenerator(df, imgs_dir=imgs_dir, batch_size=12)
+    t0 = time()
+    _ = [gen.__getitem__(0) for _ in range(n_tests)]
+    print(time() - t0)
+
+    gen = BBoxsGenerator(pd.read_csv("../data/bboxs_x2y2.csv"), imgs_dir=imgs_dir, batch_size=24)
     t0 = time()
     _ = [gen.__getitem__(0) for _ in range(n_tests)]
     print(time() - t0)

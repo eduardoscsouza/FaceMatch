@@ -10,7 +10,7 @@ def train_model(model, train_datagen, val_datagen,
                 tensorboard_logdir="../experiments/tensorboard_logs",
                 best_model_filepath="best_model.h5", best_model_metric="val_mean_bbox_iou", best_model_metric_mode='max',
                 earlystop_metric="loss", earlystop_metric_mode='min', earlystop_min_delta=0.000225, early_stop_patience=80,
-                generator_queue_size=15, generator_workers=1):
+                generator_queue_size=15, generator_workers=1, use_multiprocessing=True):
 
     tensorboard = TensorBoard(log_dir=tensorboard_logdir,
                             histogram_freq=0,
@@ -47,16 +47,16 @@ def train_model(model, train_datagen, val_datagen,
             validation_freq=1,
             max_queue_size=generator_queue_size,
             workers=generator_workers,
-            use_multiprocessing=False,
+            use_multiprocessing=use_multiprocessing,
             sample_weight=None,
             class_weight=None,
             initial_epoch=0)
 
 
 
-def evaluate_model(model, datagen, evaluation_steps=2000, generator_queue_size=15, generator_workers=1):
+def evaluate_model(model, datagen, evaluation_steps=2000, generator_queue_size=15, generator_workers=1, use_multiprocessing=True):
     return model.evaluate(datagen, steps=evaluation_steps, callbacks=None,
-                        max_queue_size=generator_queue_size, workers=generator_workers, use_multiprocessing=False,
+                        max_queue_size=generator_queue_size, workers=generator_workers, use_multiprocessing=use_multiprocessing,
                         verbose=False)
 
 def get_evaluation_df(model, eval_metrics):
@@ -76,7 +76,7 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
                 tensorboard_logdir="../experiments/tensorboard_logs",
                 best_model_metric="val_mean_bbox_iou", best_model_metric_mode='max',
                 earlystop_metric="loss", earlystop_metric_mode='min', earlystop_min_delta=0.001, early_stop_patience=80,
-                generator_queue_size=15, generator_workers=1,
+                generator_queue_size=15, generator_workers=1, use_multiprocessing=True,
                 evaluation_steps=2000):
 
     tensorboard_logdir = os.path.join(tensorboard_logdir, exp_name)
@@ -91,12 +91,13 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
                 best_model_filepath=best_model_filepath, best_model_metric=best_model_metric, best_model_metric_mode=best_model_metric_mode,
                 earlystop_metric=earlystop_metric, earlystop_metric_mode=earlystop_metric_mode,
                 earlystop_min_delta=earlystop_min_delta, early_stop_patience=early_stop_patience,
-                generator_queue_size=generator_queue_size, generator_workers=generator_workers)
+                generator_queue_size=generator_queue_size, generator_workers=generator_workers, use_multiprocessing=use_multiprocessing)
     model.load_weights(best_model_filepath)
     model.save(best_model_filepath, overwrite=True, include_optimizer=False, save_format='h5')
     gc.collect()
 
-    eval_args = dict(evaluation_steps=evaluation_steps, generator_queue_size=generator_queue_size, generator_workers=generator_workers)
+    eval_args = dict(evaluation_steps=evaluation_steps, generator_queue_size=generator_queue_size,
+                    generator_workers=generator_workers, use_multiprocessing=use_multiprocessing)
     train_df = get_evaluation_df(model, evaluate_model(model, train_datagen, **eval_args))
     val_df = get_evaluation_df(model, evaluate_model(model, val_datagen, **eval_args))
     combine_train_val_dfs(train_df, val_df).to_csv(metrics_csv_filepath, index=False)
