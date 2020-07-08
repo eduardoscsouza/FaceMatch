@@ -76,7 +76,7 @@ def __get_indvs__(indvs_df, min_indv_imgs, imgs_dir):
 
     return indvs, aux_len, aux_indvs_len, len_out
 
-def __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
+def __get_load_img_args__(out_color, resize, out_image_size, cv2_inter):
     cv2_color_BGR2 = cv2.COLOR_BGR2GRAY if (out_color == 'gray') else cv2.COLOR_BGR2RGB
     return (resize, out_image_size, cv2_inter, cv2_color_BGR2)
 
@@ -150,9 +150,20 @@ class TripletEvalGenerator(Sequence):
 if __name__ == '__main__':
     import pandas as pd
     df = pd.read_csv("../data/indvs.csv")
-    gen = TripletTrainGenerator(df, imgs_dir="../data/Img_Crop_Resize")
-    out_dir = os.makedirs("temp", exist_ok=True)
+    imgs_dir = "../data/Img_Crop_Resize"
+
+    out_dir = "temp_1"
+    os.makedirs(out_dir, exist_ok=True)
+    gen = TripletTrainGenerator(df, imgs_dir=imgs_dir)
     imgs, labels = gen.__getitem__(0)
     print(labels)
     for i in range(16):
-        cv2.imwrite("temp/{}.jpg".format(i), cv2.cvtColor(imgs[i], cv2.COLOR_RGB2BGR))
+        cv2.imwrite("{}/{}.jpg".format(out_dir, i), cv2.cvtColor(imgs[i], cv2.COLOR_RGB2BGR))
+
+    out_dir = "temp_2"
+    os.makedirs(out_dir, exist_ok=True)
+    gen = TripletEvalGenerator(df, imgs_dir=imgs_dir)
+    imgs = gen.__getitem__(0)
+    for i in range(32):
+        for j in range(3):
+            cv2.imwrite("{}/{}-{}.jpg".format(out_dir, i, j), cv2.cvtColor(imgs[j][i], cv2.COLOR_RGB2BGR))
