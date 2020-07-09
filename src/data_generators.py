@@ -94,7 +94,7 @@ class BBoxsGenerator(Sequence):
         self.imgs = np.asarray([os.path.join(imgs_dir, img) for img in bboxs_df.iloc[:, 0]])
         self.labels = np.asarray(bboxs_df.iloc[:, 1:], dtype=np.float64 if (out_dtype==np.float64) else np.float32)
         self.__aux_len__ = len(self.imgs)
-        self.__len_out__ = (len(self.imgs) // batch_size) - 1
+        self.__len_out__ = len(self.imgs) // batch_size
 
         self.ord = np.random.permutation(self.__aux_len__)
         self.__load_img_args__ = __get_load_img_args__(out_color, resize, out_image_size, cv2_inter)
@@ -229,6 +229,7 @@ if __name__ == '__main__':
     import shutil
     import pandas as pd
     df = pd.read_csv("../data/indvs.csv")
+    bboxs_df = pd.read_csv("../data/bboxs_x2y2.csv")
     imgs_dir = "../data/Img_Crop_Resize"
 
     out_dir = "temp_1"
@@ -261,6 +262,33 @@ if __name__ == '__main__':
         for j in range(2):
             cv2.imwrite("{}/{}-{}-{}.jpg".format(out_dir, i, j, labels[i]), cv2.cvtColor(imgs[j][i], cv2.COLOR_RGB2BGR))
 
+    out_dir = "temp_4"
+    os.makedirs(out_dir, exist_ok=True)
+    for img_size in [112, 224]:
+        batch_size = 32
+        gen_a = get_bboxs_generator(bboxs_df, out_image_size=(img_size, img_size), batch_size=batch_size)
+        gen_b = BBoxsGenerator(bboxs_df, out_image_size=(img_size, img_size), resize=(img_size!=224), batch_size=batch_size)
+        last_a, last_b = gen_a.__len__(), gen_b.__len__()
+
+        assert (last_a-last_b == 0) or (last_a-last_b == 1)
+        assert gen_a.__getitem__(last_b-1)[0].shape == gen_b.__getitem__(last_b-1)[0].shape
+        if last_a != last_b:
+            assert gen_a.__getitem__(last_a-1)[0].shape != gen_b.__getitem__(last_b-1)[0].shape
+
+        n_batchs, n_imgs_batch = 4, 4
+        for i in range(n_batchs):
+            batch, imgs = np.random.randint(last_b), np.random.randint(batch_size, size=(n_imgs_batch,))
+            imgs_a, imgs_b = gen_a.__getitem__(batch), gen_b.__getitem__(batch)
+            # Only works if shuffling is disabled
+            # Images are the same, but BBoxsGenerator images are sharper
+            #assert np.allclose(imgs_a[1], imgs_b[1])
+
+            imgs_a, imgs_b = imgs_a[0][imgs], imgs_b[0][imgs]
+            imgs_a, imgs_b = (255.0*imgs_a).astype(np.uint8), (255.0*imgs_b).astype(np.uint8)
+            for j in range(n_imgs_batch):
+                cv2.imwrite("{}/{}-{}-{}-{}.jpg".format(out_dir, img_size, i, j, "0"), cv2.cvtColor(imgs_a[j], cv2.COLOR_RGB2BGR))
+                cv2.imwrite("{}/{}-{}-{}-{}.jpg".format(out_dir, img_size, i, j, "1"), cv2.cvtColor(imgs_b[j], cv2.COLOR_RGB2BGR))
+
     from time import time
     n_tests = 100
 
@@ -279,7 +307,7 @@ if __name__ == '__main__':
     _ = [gen.__getitem__(0) for _ in range(n_tests)]
     print(time() - t0)
 
-    gen = BBoxsGenerator(pd.read_csv("../data/bboxs_x2y2.csv"), imgs_dir=imgs_dir, batch_size=24)
+    gen = BBoxsGenerator(bboxs_df, imgs_dir=imgs_dir, batch_size=24)
     t0 = time()
     _ = [gen.__getitem__(0) for _ in range(n_tests)]
     print(time() - t0)
