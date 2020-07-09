@@ -73,7 +73,7 @@ for img_size in [56, 112, 224]:
 
                         run_experiment(model, exp_name, train_datagen, val_datagen,
                                     results_dir=results_dir, tensorboard_logdir=tensorboard_dir,
-                                    generator_queue_size=15, generator_workers=4, use_multiprocessing=True)
+                                    generator_queue_size=50, generator_workers=8, use_multiprocessing=False)
 
                         del train_datagen, val_datagen, model
                         gc.collect()
