@@ -190,8 +190,5 @@ data/Img_Crop_Resize
 # What was in the template wasn't enogh
 *.vscode/*
 
-### Axuliary Shell Scripts ###
-cleanup.sh
-
 ### Mac Files ###
 .DS_Store

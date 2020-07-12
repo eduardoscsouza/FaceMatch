@@ -126,6 +126,17 @@ def getFilenamesFromDir(path):
 
 
 
+def get_best_exps(top_dir, top_k=3, metric="Mean Bbox Iou", metric_set="Val"):
+    dfs = glob(os.path.join(top_dir, "*", "metrics.csv"))
+    dfs = [(df, pd.read_csv(df)) for df in dfs]
+    dfs = [(filename, df[df["Set"]==metric_set][metric].iloc[0]) for filename, df in dfs]
+    dfs = sorted(dfs, key=lambda k : k[1], reverse=True)[:top_k]
+    dfs = [(filename, pd.read_csv(filename)) for filename, _ in dfs]
+
+    return dfs
+
+
+
 if __name__ == '__main__':
     gen_bboxs_csv("../data/list_bbox_celeba_fixed.txt", "../data/Img/", bboxs_csv_outfile="bboxs.csv", return_df=False, n_procs=16)
     gen_bboxs_csv_x2y2("../data/list_bbox_celeba_fixed.txt", "../data/Img/", bboxs_csv_outfile="bboxs_x2y2.csv", return_df=False, n_procs=16)
