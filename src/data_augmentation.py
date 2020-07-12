@@ -6,6 +6,11 @@ import random
 import sys
 sys.path.append("../sample_imgs")
 
+"""
+Translates images randomly without taking the bounding box out of
+the image. On the parts that weren't on the original images, pads
+with edge.
+"""
 def translate_face_randomly(img, bbox):
     rows, cols = img.shape[:2]
 
@@ -43,6 +48,9 @@ def translate_face_randomly(img, bbox):
 
     return img, bbox
 
+"""
+Rotates images randomly on the interval [-45 degrees, 45 degrees]. 
+"""
 def rotate_face_randomly(img, bbox):
     rows, cols = img.shape[:2]
 
@@ -72,11 +80,19 @@ def rotate_face_randomly(img, bbox):
 
     return img, bbox
 
+"""
+Apply some transformation on a set of images and bounding boxes.
+- 'images' and 'bboxes' must have the same size
+- All the images must have the same dimensions
+- 'transformation' may get an image and a bounding box as parameters
+    and also get an image and a bounding box as return
+"""
 def apply_transformation_to_images(images, bboxes, transformation):
     imgs_bboxes = np.array([transformation(img, bbox) for img, bbox in zip(images, bboxes)])
     images = imgs_bboxes[:, 0]
     bboxes = imgs_bboxes[:, 1]
     return images, bboxes
+
 
 """
 # Example of usage:
@@ -92,5 +108,3 @@ bboxes = np.concatenate((bboxes, bboxes))
 
 imgs, bboxes = apply_transformation_to_images(imgs, bboxes, translate_face_randomly)
 """
-
-
