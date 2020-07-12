@@ -18,6 +18,21 @@ def translate_face_randomly(img, bbox):
     M = np.float32([[1, 0, tx], [0, 1, ty]])
 
     img = cv2.warpAffine(img, M, (cols, rows))
+
+    if (ty >= 0):
+        if (tx >= 0):
+            img = img[ty:, tx:]
+            img = np.stack([np.pad(img[:,:,c], ((ty, 0), (tx, 0)), mode='edge') for c in range(3)], axis=2)
+        else:
+            img = img[ty:, :cols+tx]
+            img = np.stack([np.pad(img[:,:,c], ((ty, 0), (0, np.abs(tx))), mode='edge') for c in range(3)], axis=2)
+    else:
+        if (tx >= 0):
+            img = img[:rows+ty, tx:]
+            img = np.stack([np.pad(img[:,:,c], ((0, np.abs(ty)), (tx, 0)), mode='edge') for c in range(3)], axis=2)
+        else:
+            img = img[:rows+ty, :cols+tx]
+            img = np.stack([np.pad(img[:,:,c], ((0, np.abs(ty)), (0, np.abs(tx))), mode='edge') for c in range(3)], axis=2)
     
     x1 = (bbox[0]*cols + tx)/cols
     y1 = (bbox[1]*rows + ty)/rows
