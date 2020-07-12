@@ -32,6 +32,7 @@ from model_builders import *
 #########################
 
 from tensorflow.keras.applications import vgg16
+from tensorflow.keras.models import load_model
 import pandas as pd
 import os
 import gc
@@ -52,6 +53,11 @@ gen_args = dict(min_indv_imgs=5, imgs_dir=imgs_dir,
                 out_dtype=np.float32, out_color='rgb',
                 resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
                 preprocess_func=vgg16.preprocess_input)
+eval_gen_args = dict(min_indv_imgs=5, imgs_dir=imgs_dir,
+                    batch_size=16,
+                    out_dtype=np.float32, out_color='rgb',
+                    resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
+                    preprocess_func=vgg16.preprocess_input)
 
 for dist in ['eucl', 'cos']:
     exp_name = "dist-{}".format(dist)
@@ -77,11 +83,35 @@ for dist in ['eucl', 'cos']:
                     best_model_metric="val_loss", best_model_metric_mode='min',
                     earlystop_metric="loss", earlystop_metric_mode='min',
                     earlystop_min_delta=0.0005, early_stop_patience=80,
-                    generator_queue_size=20, generator_workers=4, use_multiprocessing=True,
+                    generator_queue_size=20, generator_workers=4, use_multiprocessing=False,
                     evaluation_steps=2000)
 
         del train_datagen, val_datagen, model
         gc.collect()
 
+        tf.keras.backend.clear_session()
+        gc.collect()
+
+    if ( os.path.isfile(os.path.join(aux_exp_dir, "metrics.csv")) and
+    (not os.path.isfile(os.path.join(aux_exp_dir, "classifier_metrics.csv"))) ):
+        vgg16_extractor = load_model(os.path.join(aux_exp_dir, "best_model.h5"), compile=False,
+                                    custom_objects={'L2Normalization':L2Normalization})
+
+        dist_train_datagen = TripletDistancesGenerator(train_df, **eval_gen_args)
+        dist_val_datagen = TripletDistancesGenerator(val_df, **eval_gen_args)
+        class_train_datagen = TripletClassifierGenerator(train_df, **eval_gen_args)
+        class_val_datagen = TripletClassifierGenerator(val_df, **eval_gen_args)
+        gc.collect()
+
+        evaluate_triplet(vgg16_extractor, exp_name=exp_name,
+                        dist_train_datagen=dist_train_datagen, dist_val_datagen=dist_val_datagen,
+                        class_train_datagen=class_train_datagen, class_val_datagen=class_val_datagen,
+                        dist_type=dist, alpha=1.0,
+                        results_dir=results_dir,
+                        evaluation_steps=2000, generator_queue_size=20, generator_workers=4, use_multiprocessing=False)
+
+        del dist_train_datagen, dist_val_datagen
+        del class_train_datagen, class_val_datagen
+        del vgg16_extractor
         tf.keras.backend.clear_session()
         gc.collect()
