@@ -12,16 +12,23 @@ def translate_face_randomly(img, bbox):
     tx = random.uniform(-bbox[0]*cols, cols-bbox[2]*cols)
     ty = random.uniform(-bbox[1]*rows, rows-bbox[3]*rows)
 
+    tx = int(tx)
+    ty = int(ty)
+
     M = np.float32([[1, 0, tx], [0, 1, ty]])
 
     img = cv2.warpAffine(img, M, (cols, rows))
+    
 
-    x1 = int(bbox[0]*cols + tx)
-    y1 = int(bbox[1]*rows + ty)
-    x2 = int(bbox[2]*cols + tx)
-    y2 = int(bbox[3]*rows + ty)
 
-    return img
+    x1 = (bbox[0]*cols + tx)/cols
+    y1 = (bbox[1]*rows + ty)/rows
+    x2 = (bbox[2]*cols + tx)/cols
+    y2 = (bbox[3]*rows + ty)/rows
+
+    bbox = np.array([x1, y1, x2, y2])
+
+    return img, bbox
 
 def rotate_face_randomly(img, bbox):
     rows, cols = img.shape[:2]
@@ -43,18 +50,24 @@ def rotate_face_randomly(img, bbox):
     p3 = np.matmul(M, p3).flatten().astype(int)
     p4 = np.matmul(M, p4).flatten().astype(int)
 
-    mn_x = min(p1[0], p2[0], p3[0], p4[0])
-    mn_y = min(p1[1], p2[1], p3[0], p4[0])
-    mx_x = max(p1[0], p2[0], p3[0], p4[0])
-    mx_y = max(p1[1], p2[1], p3[1], p4[1])
+    mn_x = min(p1[0], p2[0], p3[0], p4[0])/rows
+    mn_y = min(p1[1], p2[1], p3[0], p4[0])/cols
+    mx_x = max(p1[0], p2[0], p3[0], p4[0])/rows
+    mx_y = max(p1[1], p2[1], p3[1], p4[1])/cols
 
-    return img
+    bbox = np.array([mn_x, mn_y, mx_x, mx_y])
+
+    return img, bbox
 
 def apply_transformation_to_images(images, bboxes, transformation):
-    images = [transformation(img, bbox) for img, bbox in zip(images, bboxes)]
+    imgs_bboxes = np.array([transformation(img, bbox) for img, bbox in zip(images, bboxes)])
+    images = imgs_bboxes[:, 0]
+    bboxes = imgs_bboxes[:, 1]
     return images, bboxes
 
 """
+# Example of usage:
+
 img = cv2.imread('../sample_imgs/raw/000001.jpg')
 bbox = [0.23227383863080683,0.10334788937409024,0.784841075794621,0.5589519650655022]
 
@@ -65,9 +78,6 @@ imgs = np.concatenate((imgs, imgs))
 bboxes = np.concatenate((bboxes, bboxes))
 
 imgs, bboxes = apply_transformation_to_images(imgs, bboxes, translate_face_randomly)
-
-cv2.imshow('bla', imgs[0])
-cv2.waitKey()
-cv2.imshow('bla', imgs[1])
-cv2.waitKey()
 """
+
+
