@@ -19,8 +19,6 @@ def translate_face_randomly(img, bbox):
 
     img = cv2.warpAffine(img, M, (cols, rows))
     
-
-
     x1 = (bbox[0]*cols + tx)/cols
     y1 = (bbox[1]*rows + ty)/rows
     x2 = (bbox[2]*cols + tx)/cols
