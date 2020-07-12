@@ -2,9 +2,11 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten
-from tensorflow.keras.layers import Input, Layer, MaxPooling2D, SeparableConv2D
+from tensorflow.keras.layers import Input, Lambda, Layer, MaxPooling2D, SeparableConv2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
+from tensorflow.keras.metrics import BinaryAccuracy, Precision, Recall
+from tensorflow.keras.metrics import TrueNegatives, FalsePositives, FalseNegatives, TruePositives
 from tensorflow.keras.optimizers import Adam, Adamax
 from tensorflow.python.keras.metrics import MeanMetricWrapper
 
@@ -233,6 +235,25 @@ def build_triplet_evaluation_model(extractor_model, dist_type='eucl', alpha=1.0,
     triplet_model.compile(optimizer=Adamax(), loss=None)
     return triplet_model
 
+def build_triplet_classifier_model(extractor_model, dist_type='eucl', threshold=1.0):
+    anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
+    anchor_out = extractor_model(anchor_in)
+
+    compare_in = Input(shape=(224, 224, 3), name="compare_in")
+    compare_out = extractor_model(compare_in)
+
+    if dist_type == 'cos':
+        dist = CosineDistance(name="dist")([anchor_out, compare_out])
+    else:
+        dist = EuclidianDistanceSquared(name="dist")([anchor_out, compare_out])
+
+    model = Lambda(lambda x : tf.cast((x < threshold), tf.float32))(dist)
+    model = Model([anchor_in, compare_in], model)
+    model.compile(optimizer=Adamax(), loss=None, metrics=[BinaryAccuracy(), Precision(), Recall(),
+                TrueNegatives(), FalsePositives(), FalseNegatives(), TruePositives()])
+
+    return model
+
 
 
 if __name__ == '__main__':
@@ -273,20 +294,25 @@ if __name__ == '__main__':
     from glob import glob
     from time import time
     from tensorflow.keras.applications import vgg16
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
 
     imgs = []
-    for img in glob("temp/*.jpg"):
+    for img in sorted(glob("test_imgs/*.jpg")):
         imgs += [cv2.cvtColor(cv2.imread(img), cv2.COLOR_BGR2RGB)]
     imgs = vgg16.preprocess_input(np.asarray(imgs)).astype(np.float32)
 
     n_samples = len(imgs)
     split_size = n_samples//3
+    d_split = int(np.floor(split_size/2))
     alpha = np.random.random((1,)).astype(np.float32)[0]
+    true_class = np.random.randint(2, size=split_size)
+
     a, b, c = imgs[:split_size], imgs[split_size:2*split_size], imgs[2*split_size:3*split_size]
+    d = np.concatenate((b[:d_split], c[d_split:]), axis=0)
 
     for extraction_layer_indx in range(3):
         extractor_model = build_vgg16_triplet_extractor(extraction_layer_indx=extraction_layer_indx)
-        p_a, p_b, p_c = extractor_model.predict(a), extractor_model.predict(b), extractor_model.predict(c)
+        p_a, p_b, p_c, p_d = extractor_model.predict(a), extractor_model.predict(b), extractor_model.predict(c), extractor_model.predict(d)
 
         correct = np.empty(split_size, dtype=np.float32)
         correct_dp = np.empty(split_size, dtype=np.float32)
@@ -309,6 +335,29 @@ if __name__ == '__main__':
         assert np.allclose(neg_dist, correct_dn)
         assert np.allclose(triplet, correct_tr)
 
+        threshold = (pos_dist + neg_dist) / 2.0
+        correct_out = np.empty(split_size, dtype=np.float32)
+        for i in range(split_size):
+            aux_a, aux_d = p_a[i], p_d[i]
+            correct_out[i] = np.square(np.linalg.norm(aux_a-aux_d))
+            correct_out[i] = correct_out[i] < threshold
+        correct_acc = accuracy_score(true_class, correct_out).astype(np.float32)
+        correct_prec = precision_score(true_class, correct_out).astype(np.float32)
+        correct_rec = recall_score(true_class, correct_out).astype(np.float32)
+        correct_tn, correct_fp, correct_fn, correct_tp = confusion_matrix(true_class, correct_out).astype(np.float32).ravel()
+
+        model = build_triplet_classifier_model(extractor_model, dist_type='eucl', threshold=threshold)
+        out = model.predict([a, d])[:, 0]
+        acc, prec, rec, tn, fp, fn, tp = model.evaluate([a, d], true_class)[1:]
+        assert np.all(out == correct_out)
+        assert np.all(acc == correct_acc)
+        assert np.all(prec == correct_prec)
+        assert np.all(rec == correct_rec)
+        assert np.all(tn == correct_tn)
+        assert np.all(fp == correct_fp)
+        assert np.all(fn == correct_fn)
+        assert np.all(tp == correct_tp)
+
         correct = np.empty(split_size, dtype=np.float32)
         correct_dp = np.empty(split_size, dtype=np.float32)
         correct_dn = np.empty(split_size, dtype=np.float32)
@@ -330,7 +379,30 @@ if __name__ == '__main__':
         assert np.allclose(neg_dist, correct_dn)
         assert np.allclose(triplet, correct_tr)
 
-        del extractor_model, p_a, p_b, p_c
+        threshold = (pos_dist + neg_dist) / 2.0
+        correct_out = np.empty(split_size, dtype=np.float32)
+        for i in range(split_size):
+            aux_a, aux_d = p_a[i], p_d[i]
+            correct_out[i] = 1.0 - (np.sum(aux_a*aux_d) / (np.linalg.norm(aux_a) * np.linalg.norm(aux_d)))
+            correct_out[i] = correct_out[i] < threshold
+        correct_acc = accuracy_score(true_class, correct_out).astype(np.float32)
+        correct_prec = precision_score(true_class, correct_out).astype(np.float32)
+        correct_rec = recall_score(true_class, correct_out).astype(np.float32)
+        correct_tn, correct_fp, correct_fn, correct_tp = confusion_matrix(true_class, correct_out).astype(np.float32).ravel()
+
+        model = build_triplet_classifier_model(extractor_model, dist_type='cos', threshold=threshold)
+        out = model.predict([a, d])[:, 0]
+        acc, prec, rec, tn, fp, fn, tp = model.evaluate([a, d], true_class)[1:]
+        assert np.all(out == correct_out)
+        assert np.all(acc == correct_acc)
+        assert np.all(prec == correct_prec)
+        assert np.all(rec == correct_rec)
+        assert np.all(tn == correct_tn)
+        assert np.all(fp == correct_fp)
+        assert np.all(fn == correct_fn)
+        assert np.all(tp == correct_tp)
+
+        del extractor_model, p_a, p_b, p_c, p_d
     del correct, in_1, in_2, out, model
     tf.keras.backend.clear_session()
     gc.collect()
