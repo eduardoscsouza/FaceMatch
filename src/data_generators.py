@@ -152,7 +152,7 @@ class TripletTrainGenerator(Sequence):
 
 
 
-class TripletEvalGenerator(Sequence):
+class TripletDistancesGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_size=32,
                 out_dtype=np.float32, out_color='rgb',
@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
     out_dir = "temp_2"
     os.makedirs(out_dir, exist_ok=True)
-    gen = TripletEvalGenerator(df, imgs_dir=imgs_dir)
+    gen = TripletDistancesGenerator(df, imgs_dir=imgs_dir)
     print(gen.__len__())
     imgs = gen.__getitem__(0)
     for i in range(32):
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     _ = [gen.__getitem__(0) for _ in range(n_tests)]
     print(time() - t0)
 
-    gen = TripletEvalGenerator(df, imgs_dir=imgs_dir, batch_size=8)
+    gen = TripletDistancesGenerator(df, imgs_dir=imgs_dir, batch_size=8)
     t0 = time()
     _ = [gen.__getitem__(0) for _ in range(n_tests)]
     print(time() - t0)

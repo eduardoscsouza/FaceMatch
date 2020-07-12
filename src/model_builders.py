@@ -204,9 +204,9 @@ class TripletLoss(Layer):
         return tripl
 
     def get_config(self):
-        return {"alpha":float(self.alpha)}
+        return {"alpha":float(self.alpha), "name":self.name, "dtype":self.dtype}
 
-def build_triplet_evaluation_model(extractor_model, dist_type='eucl', alpha=1.0, add_loss=False):
+def build_triplet_distances_model(extractor_model, dist_type='eucl', alpha=1.0, add_loss=False):
     anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
     anchor_out = extractor_model(anchor_in)
 
@@ -328,7 +328,7 @@ if __name__ == '__main__':
         correct_dn = np.sum(correct_dn) / len(correct_dn)
         correct_tr = np.sum(correct) / len(correct)
 
-        model = build_triplet_evaluation_model(extractor_model, dist_type='eucl', alpha=alpha)
+        model = build_triplet_distances_model(extractor_model, dist_type='eucl', alpha=alpha)
         pos_dist, neg_dist, triplet = model.evaluate([a, b, c])[1:]
         assert np.allclose(model.predict([a, b, c])[:, 0], correct, rtol=0.000316228, atol=1e-06)
         assert np.allclose(pos_dist, correct_dp)
@@ -372,7 +372,7 @@ if __name__ == '__main__':
         correct_dn = np.sum(correct_dn) / len(correct_dn)
         correct_tr = np.sum(correct) / len(correct)
 
-        model = build_triplet_evaluation_model(extractor_model, dist_type='cos', alpha=alpha)
+        model = build_triplet_distances_model(extractor_model, dist_type='cos', alpha=alpha)
         pos_dist, neg_dist, triplet = model.evaluate([a, b, c])[1:]
         assert np.allclose(model.predict([a, b, c])[:, 0], correct, rtol=0.000316228, atol=1e-06)
         assert np.allclose(pos_dist, correct_dp)
@@ -417,7 +417,7 @@ if __name__ == '__main__':
                 alpha = np.random.random((1,)).astype(np.float32)[0]
                 extractor_model = build_vgg16_triplet_extractor(extraction_layer_indx=extraction_layer_indx)
                 for add_loss in [True, False]:
-                    model = build_triplet_evaluation_model(extractor_model, dist_type=dist_type, alpha=alpha, add_loss=add_loss)
+                    model = build_triplet_distances_model(extractor_model, dist_type=dist_type, alpha=alpha, add_loss=add_loss)
                     model.save_weights(temp_filename)
                     model.load_weights(temp_filename)
                     model.save(temp_filename)
