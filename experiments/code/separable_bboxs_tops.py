@@ -94,11 +94,11 @@ for top in tops:
     del train_df, val_df
     gc.collect()
 
-    model = build_bbox_model(input_size=(img_size, img_size, 1),
-                            n_conv_blocks=n_conv_blocks, base_conv_n_filters=base_conv_n_filters,
-                            n_dense_layers=2, dense_size=dense_size, dropout_rate=0.30,
-                            loss=MeanSquaredError(), optimizer=Adam(),
-                            metrics=[MeanAbsoluteError(), MeanBBoxIoU(x2y2=True)])
+    model = build_bbox_separable_model(input_size=(img_size, img_size, 1),
+                                    n_conv_blocks=n_conv_blocks, base_conv_n_filters=base_conv_n_filters,
+                                    n_dense_layers=2, dense_size=dense_size, dropout_rate=0.30,
+                                    loss=MeanSquaredError(), optimizer=Adam(),
+                                    metrics=[MeanAbsoluteError(), MeanBBoxIoU(x2y2=True)])
 
     run_experiment(model, exp_name, train_datagen, val_datagen,
                 results_dir=results_dir, tensorboard_logdir=tensorboard_dir,
