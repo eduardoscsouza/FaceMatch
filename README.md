@@ -174,7 +174,7 @@ To achieve our goals, we will need a large and varied dataset with two important
 1. Annotation of the bounding box of the face present in the image.
 2. Annotation of the identity of the person present in the image.
 
-We decided to use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset exclusevely. It has the annotations needed, and is also extremely large, having 202,599 images. There are two versions of it, one with the raw image, the other with the face already mostly cropped. We used the raw version. All the images are photographs of celebrities, in a variety of conditions, with their faces visible.
+We decided to use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset exclusively. It has the annotations needed, and is also extremely large, having 202,599 images. There are two versions of it, one with the raw image, the other with the face already mostly cropped. We used the raw version. All the images are photographs of celebrities, in a variety of conditions, with their faces visible.
 
 ### **CelebA Examples**
 <img src="sample_imgs/raw/000002.jpg" width="250" height="250"></img>
@@ -216,7 +216,7 @@ We reorganized and reformated the original dataset to better suit our needs and 
 
 #### **Data augmentation**
 
-Our model wasn't generating good results when the face was on the bottom or edges of the image. That is because in most images in the dataset, the face is on the upper part. To solve that, we augmented the data, by translating the image randomly, without taking the face bounding box out of the image. After the translation, the image would contain an empty part (section that wasn't on the original image). To fix that we filled those parts with the closest edge color of the original image.
+Our model wasn't generating good results when the face was on the bottom or edges of the image. That is because in most images in the dataset, the face is on the upper part. To solve that, we augmented the data, by translating the image randomly, without taking the face bounding box out of the image. After the translation, the image would contain an empty part (the section that wasn't on the original image). To fix that we filled those parts with the closest edge color of the original image.
 
 <img src="sample_imgs/not_augmented.jpg" width="210" height="300"></img>
 
@@ -229,10 +229,10 @@ Our model wasn't generating good results when the face was on the bottom or edge
 More augmentation examples can be found [here](./sample_code/DataAugmentationTranslation.ipynb).
 
 #### **Resizing**
-Our CNN models only take inputs of a specific size. So we need to resize the image to the correct size. This resizing needs to be done for every bacth of training, and when executing, so we decided to use the bilinear interpolation for its relative low computational cost.
+Our CNN models only take inputs of a specific size. So we need to resize the image to the correct size. This resizing needs to be done for every batch of training, and when executing, so we decided to use the bilinear interpolation for its relatively low computational cost.
 
 #### **Failed Preprocessing**
-We tested changes in the color domain and the canny edge detector to try to improve our results. They either made the results worse, or didn't improve significantly, so they were not used. Here are their results (these metrics are better explained below):
+We tested changes in the color domain and the Canny edge detector to try to improve our results. They either made the results worse or didn't improve significantly, so they were not used. Here are their results (these metrics are better explained below):
 
 |Set|Loss                 |Mean Absolute Error|Mean Bbox Iou     |
 |---|---------------------|-------------------|------------------|
@@ -265,23 +265,23 @@ We tested changes in the color domain and the canny edge detector to try to impr
 
 
 ### **3. Face Segmentation**
-We used CNN's to predict the bounding box of the face. Our CNN's receive an unsegmented image as input, and return 4 real numbers between 0 and 1. Those numbers are the position of the bouding box, as fractions of the image shape. They are, in order, the left, upper, right, and lower edges of the bounding box.
+We used CNN's to predict the bounding box of the face. Our CNN's receive an unsegmented image as input, and return 4 real numbers between 0 and 1. Those numbers are the position of the bounding box, as fractions of the image shape. They are, in order, the left, upper, right, and lower edges of the bounding box.
 
 #### **Depthwise Separable Convolutions**
-We used 2 different versions of our CNN's. One used standard convolutions, and the other used depthwise separable convolutions. Depthwise separable convolutions are a different operation, similar to regular convolutions, but with the aim to reduce number of parameters and, especially, number of operations. They do so by breaking up the channels of the input image, them performing a single convolution on each channel. Them, they recombine the resulting filtered images, and apply *N* regular convolutions, of size 1x1. The important aspect is that, by having only one filter per input channel, they greatly reduce the computational requirements. It is best represented by image 2.
+We used 2 different versions of our CNN's. One used standard convolutions, and the other used depthwise separable convolutions. Depthwise separable convolutions are a different operation, similar to regular convolutions, but aiming to reduce the number of parameters and, especially, number of operations. They do so by breaking up the channels of the input image, them performing a single convolution on each channel. Them, they recombine the resulting filtered images and apply *N* regular convolutions, of size 1x1. The important aspect is that, by having only one filter per input channel, they greatly reduce the computational requirements. It is best represented by image 2.
 
 <img src="./sample_imgs/depthwise_sep.png" width="600" height="400"></img>
 
 *Image 2 - Depthwise Separable Convolution Representation. [Original Source of the Image](https://towardsdatascience.com/review-mobilenetv1-depthwise-separable-convolution-light-weight-model-a382df364b69)*
 
 #### *Intersection Over Union*
-To evaluate our models, we decided top use the intersection-over-union metric. It works by dividing the area of the intersection of the two bounding boxes by the area of their union.
+To evaluate our models, we decided to use the intersection-over-union metric. It works by dividing the area of the intersection of the two bounding boxes by the area of their union.
 
 <img src="./sample_imgs/iou.png" width="300" height="234"></img>
 
 *Image 3 - IoU Representation. [Original Source of the Image](https://www.pyimagesearch.com/wp-content/uploads/2016/09/iou_equation.png)*
 
-For each type of convolution, we tried several different hyperparameters configurations, resulting in 54 experiments each. Here are the training graphs for the best models of each one.
+For each type of convolution, we tried several different hyperparameters configurations, resulting in 54 experiments each. Here are the training graphs for the best models of each version.
 
 <img src="./sample_imgs/cnn_train.svg" height="350"></img>
 
@@ -295,9 +295,9 @@ We then chose the best ones to improve with the data augmentation and image prep
 
 #### *Comparison with OpenCV solution*
 
-To evaluate our models' results, we compared them to OpenCV's Face Detector. We used three different metrics: the Running Time, Intersection Over Union and Mean Absolute Error. The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes, divided by the amount of points (4 time the amount of images).
+To evaluate our models' results, we compared them to OpenCV's Face Detector. We used three different metrics: the Running Time, Intersection Over Union, and Mean Absolute Error. The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes, divided by the number of points (4 times the amount of images).
 
-The running time was obtained by running the algorithms on 500 random images from [data/Img](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics of the validation set obtained during training. We limited our models to run on a single CPU core, for fairer comparison.
+The running time was obtained by running the algorithms on 500 random images from [data/Img](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics of the validation set obtained during training. We limited our models to run on a single CPU core, for a fairer comparison.
 
 |                                 | Regular Model | Model using Depth-Wise Separable Convolution | Model with Augmented Data | Model with Augmented Data using Depth-Wise Separable Convolution | OpenCV  |
 |---------------------------------|---------------|----------------------------------------------|---------------------------|------------------------------------------------------------------|---------|
@@ -310,9 +310,9 @@ The running time was obtained by running the algorithms on 500 random images fro
 
 
 ### **4. Face Feature Vector Generation**
-With the face segmented, we need to generate a feature vector capable of differenciating people. To achieve that, we used a pre-treined CNN to extract such feature vector. We got the pre-trained weights from [this link](https://drive.google.com/file/d/1CPSeum3HpopfomUEK1gybeuIVoeJT_Eo/view), originally provided on [this webpage](https://sefiks.com/2018/08/06/deep-face-recognition-with-keras/).
+With the face segmented, we need to generate a feature vector capable of differentiating people. To achieve that, we used a pre-trained CNN to extract such feature vector. We got the pre-trained weights from [this link](https://drive.google.com/file/d/1CPSeum3HpopfomUEK1gybeuIVoeJT_Eo/view), originally provided on [this webpage](https://sefiks.com/2018/08/06/deep-face-recognition-with-keras/).
 
-This CNN was originally trained on a classical classification problem, having to classify to whom, in a set of 2622 people, an image belonged. As such, we can't use it directly. To use it, we get the output of the last layer before the classification layer, and use it as an feature extractor.
+This CNN was originally trained on a classical classification problem, having to classify to whom, in a set of 2622 people, an image belonged. As such, we can't use it directly. To use it, we get the output of the last layer before the classification layer and use it as a feature extractor.
 
 #### *Triplet Loss*
 To fine tune the feature extraction, we trained the extractor using the triplet loss. Here is its equation:
@@ -342,20 +342,20 @@ The distance function in this scenario is the euclidian distance, but other func
 
 <img src="./sample_imgs/triplet-cos.svg" height="350"></img>
 
-*Image 9 - Cossine Distance Triplet over training. Green line is validation data, and pink is training*
+*Image 9 - Cosine Distance Triplet over training. Green line is validation data, and pink is training*
 
 |Set  |Pos Dist Mean     |Neg Dist Mean     |Triplet Loss Mean|
 |-----|------------------|------------------|-----------------|
 |Train|0.445333868265152 |0.8501749038696289|0.595158576965332|
 |Val  |0.4381791949272156|0.8464183807373047|0.59176105260849 |
 
-*Table 7 - Distances Using The Cossine Distance*
+*Table 7 - Distances Using The Cosine Distance*
 
 
 
 ### **5. Face Verification**
 After training the feature extractor with the triplet loss, we simply set the average of the mean positive distances and the mean negative distances as a threshold. If two vectors have a distance smaller than the threshold, they are considered as belonging to the same person, and to different people otherwise.
-We used this as a classifier, and extracted some metrics.
+We used this as a classifier and extracted some metrics.
 
 |Set  |Binary Accuracy   |Precision         |Recall            |True Negatives|False Positives|False Negatives|True Positives|
 |-----|------------------|------------------|------------------|--------------|---------------|---------------|--------------|
@@ -369,18 +369,18 @@ We used this as a classifier, and extracted some metrics.
 |Train|0.7213125228881836|0.7808796763420105|0.6143545508384705|13264.0       |2755.0         |6163.0         |9818.0        |
 |Val  |0.722406268119812 |0.77568119764328  |0.6221036314964294|13210.0       |2865.0         |6018.0         |9907.0        |
 
-*Table 9 - Classifier Using The Cossine Distance*
+*Table 9 - Classifier Using The Cosine Distance*
 
 
 
 ## **Conclusions and Considerations**
-With regards to the segmentation aspect of the project, our final models showed good performance. They were both faster and more precise then OpenCV's. However, our models only detect a single face in an image, not multiple like OpenCV's. This is sutible for many situations, for example unlocking a phone, but not all situatiuons, for example monitoring a street.
+With regard to the segmentation aspect of the project, our final models showed good performance. They were both faster and more precise then OpenCV's. However, our models only detect a single face in an image, not multiple like OpenCV's. This is suitable for many situations, for example unlocking a phone, but not all situations, for example monitoring a street.
 
-For the segmentation, we had 4 final models, as combinations of being trained using the translation augmentation, and using the depthwise separable convolutions. The augmented models had a worse performance in the dataset, but probably have a better performance in a real world scenario, but we can't test it at this moment. The models using depthwise separable convolutions have a slightly worse performance, but much lower computational cost, therefore they are more suited for situations where low computational cost and response time are more relevant, such as real-time segmentation, and embedded systems.
+For the segmentation, we had 4 final models, as combinations of being trained using the translation augmentation, and using the depthwise separable convolutions. The augmented models had a worse performance in the dataset, but probably have a better performance in a real-world scenario, but we can't test it at this moment. The models using depthwise separable convolutions have slightly worse performance, but much lower computational cost, therefore they are more suited for situations where low computational cost and response time are more relevant, such as real-time segmentation, and embedded systems.
 
-With regards to the verification aspect of the project, our final models showed good performance, but could be better, with the euclidian distance model showing better performance. We focused more on the former aspect of the project, so our verification is not as refined. One major improvement would be define the distance threshold in a more sophisticated way. They way we are currently doing doesn't take in consideration the distance distribution as a whole, just the mean. Still the verification works quite well. One notable failure is with oclusion, as shown in the images below.
+With regards to the verification aspect of the project, our final models showed good performance but could be better, with the euclidian distance model showing better performance. We focused more on the former aspect of the project, so our verification is not as refined. One major improvement would be to define the distance threshold in a more sophisticated way. The way we are currently doing doesn't take into consideration the distance distribution as a whole, just the mean. Still, the verification works quite well. One notable failure is with occlusion, as shown in the images below.
 
-One major block in our project, specially for the verification part, was training time. We had many different models, and each one took very long to train and evaluate. The euclidian distance triplet model, for example, took more than 24 hours to train. As such, with more available time we would be able to do more experimentation and achieve better results.
+One major block in our project, especially for the verification part, was training time. We had many different models, and each one took very long to train and evaluate. The euclidian distance triplet model, for example, took more than 24 hours to train. As such, with more available time we would be able to do more experimentation and achieve better results.
 
 
 
@@ -400,15 +400,15 @@ One major block in our project, specially for the verification part, was trainin
 
 <img src="./sample_imgs/fail_easy.png" height="350" width="400"></img>
 
-*Image 12.1 - Unsuccesful Verification with Little Occlusion*
+*Image 12.1 - Unsuccessful Verification with Little Occlusion*
 
 <img src="./sample_imgs/fail_hard.png" height="350" width="400"></img>
 
-*Image 12.2 - Unsuccesful Verification with High Occlusion*
+*Image 12.2 - Unsuccessful Verification with High Occlusion*
 
 These images were extracted using [this jupyter notebook](./sample_code/FinalReportDemonstration.ipynb). It is a sample where our models are run using a webcam as input. For it to work, the environment defined in [env.yml](./env.yml) should be installed, using conda.
 
-All trained models are available at our [Google Drive](https://drive.google.com/drive/folders/1R3cb0nj81Y21L5N6LgH9R_AdeinWRQHC?usp=sharing) (the files were too big to add to this repository). All the metrics csv's are available at [experiments/results](./experiments/results).
+All trained models are available at our [Google Drive](https://drive.google.com/drive/folders/1R3cb0nj81Y21L5N6LgH9R_AdeinWRQHC?usp=sharing) (the files were too big to add to this repository). All the metrics CSV's are available at [experiments/results](./experiments/results).
 
 All the metrics obtained during training are visible through tensorboard, at [experiments/tensorboard_logs](./experiments/tensorboard_logs). [This jupyter notebook](./sample_code/TensorBoardDemonstration.ipynb) has the graphs already loaded.
 
