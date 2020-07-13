@@ -369,6 +369,24 @@ All trained models are available at our [Google Drive](https://drive.google.com/
 
 
 
+## **Members Tasks**
+- Eduardo Santos Carlos de Souza (NUSP 9293481)
+    * Wrote model building code
+    * Wrote model training code
+    * Wrote data generators for trainig
+    * Preprocessed and organized data
+    * Ran many experiments
+
+- Guilherme Hideo Tubone (NUSP 9019403)
+    * Wrote face detectio using OpenCV, and its code sample
+    * Implemented Canny Edge Detector and its code sample
+    * Created benchmarks to measure running time
+    * Measured intersection-over-union and mean absolute error for the OpenCV model
+    * Implemented data augmentation of translation and rotation
+    * Ran some training experiments
+
+
+
 ---
 
 **Keywords:** Image Segmentation; Feature Learning; Deep Learning; Faces; Face Verification; Triplet Loss;
