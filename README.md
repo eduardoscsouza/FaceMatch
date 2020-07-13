@@ -14,6 +14,8 @@ This project aims to build a system capable of, given two images, determine if b
 
 
 
+# **Partial Report**
+
 ## **Main Objectives**
 As stated in the abstract, our objective is to create a system capable of verifying if 2 images of people have the face of the same person in them. Therefore the main objective can be broken down into two parts:
 
@@ -23,8 +25,6 @@ As stated in the abstract, our objective is to create a system capable of verify
 We limited our scope to only one face per image, and only photographic images.
 
 
-
-# **Partial Report**
 
 ## **Data Used**
 To achieve our goals, we will need a large and varied dataset with two important characteristics:
@@ -157,9 +157,51 @@ Finally, we implemented the canny edges detector, with a sample notebook at [sam
 
 # **Final Report**
 
+## **Main Objectives**
+As stated in the abstract, our objective is to create a system capable of verifying if 2 images of people have the face of the same person in them. Therefore the main objective can be broken down into two parts:
+
+1. A Segmentation Algorithm: Given a single image, crop out the location of the face in it.
+2. A Verification Algorithm: Given two already segmented faces, determine if they belong to the same person or not.
+
+We limited our scope to only one face per image, and only photographic images.
+
+
+
 ## **Data Used**
 
+To achieve our goals, we will need a large and varied dataset with two important characteristics:
+
+1. Annotation of the bounding box of the face present in the image.
+2. Annotation of the identity of the person present in the image.
+
 We decided to use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset exclusevely. It has the annotations needed, and is also extremely large, having 202,599 images. There are two versions of it, one with the raw image, the other with the face already mostly cropped. We used the raw version. All the images are photographs of celebrities, in a variety of conditions, with their faces visible.
+
+### **CelebA Examples**
+<img src="sample_imgs/raw/000002.jpg" width="250" height="250"></img>
+
+*Image 13.1 - Imaging containing mostly the head*
+
+<img src="sample_imgs/raw/000093.jpg" width="250" height="250"></img>
+
+*Image 13.2 - Imaging containing entire body*
+
+<img src="sample_imgs/raw/000041.jpg" width="250" height="250"></img>
+
+*Image 14.1- First Image of Individual 1058*
+
+<img src="sample_imgs/raw/000050.jpg" width="250" height="250"></img>
+
+*Image 14.2 - Second Image of Individual 1058*
+
+<img src="sample_imgs/segmented/true/000041.jpg" width="250" height="250"></img>
+
+*Image 15.1 - Image 14.1 segmented with bounding box annotation*
+
+<img src="sample_imgs/segmented/true/000050.jpg" width="250" height="250"></img>
+
+*Image 15.2 - Image 13.2 segmented with bounding box annotation*
+
+The data is too big for this repository, so we uploaded it to a [Google Drive folder](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
 
 
 
