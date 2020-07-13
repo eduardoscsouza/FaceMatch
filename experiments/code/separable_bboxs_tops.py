@@ -49,7 +49,7 @@ results_dir = "../results/tops/separable/"
 tensorboard_dir = "../tensorboard_logs/tops/separable/"
 os.makedirs(results_dir, exist_ok=True)
 for top in tops:
-    top[1].to_csv(os.path.join(results_dir, "original_metrics.csv"))
+    top[1].to_csv(os.path.join(results_dir, "original_metrics.csv"), index=False)
     img_size, n_conv_blocks, base_conv_n_filters, dense_size = [int(val.split("-")[1]) for val in top[0].split(os.sep)[-2].split("_")]
 
     for color in ['hsv', 'gray']:
