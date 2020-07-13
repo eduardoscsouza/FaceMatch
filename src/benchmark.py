@@ -143,7 +143,7 @@ def getMAE(bboxesA, bboxesB):
     return mean/cnt
 
 
-def main():
+if name == 'main':
     # Getting all images listed in csv
     csv_path = '../data/benchmark_bboxs_x2y2.csv'
     df = pd.read_csv(csv_path)
@@ -182,6 +182,3 @@ def main():
     cnn_mean_abs_error = getMAE(cnn_bboxes, label_bboxes)
     print("Mean of Absolute Error using OpenCV = " + str(cv_mean_abs_error))
     print("Mean of Absolute Error using our CNN = " + str(cnn_mean_abs_error))
-
-
-main()
