@@ -19,7 +19,8 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 
 # Loading necessary files for each solution
 face_cascade = cv2.CascadeClassifier('../data/lbpcascade_frontalface.xml')
-model = load_model("../data/benchmark_model.h5")
+model = load_model("best_model_separable.h5", compile=False)
+tf.keras.backend.clear_session()
 
 
 """
@@ -125,6 +126,22 @@ def getIouMean(bboxesA, bboxesB):
 
     return mean/cnt
 
+"""
+Calculates Mean Absolute Error between of all bounding boxes.
+Ignores cases where one of the bounding boxes is null ((-1, -1, -1, -1))
+"""
+def getMAE(bboxesA, bboxesB):
+    mean = 0
+    cnt = 0
+
+    for i in range(len(bboxesA)):
+        if (bboxesA[i] != (-1, -1, -1, -1) and bboxesB[i] != (-1, -1, -1, -1)):
+            error = np.sum(np.abs(np.array(bboxesA[i]) - np.array(bboxesB[i])))
+            mean += error
+            cnt += 4
+
+    return mean/cnt
+
 
 def main():
     # Getting all images listed in csv
@@ -160,6 +177,11 @@ def main():
     cnn_mean_iou = getIouMean(cnn_bboxes, label_bboxes)
     print("Mean of Intersection over Union using OpenCV = " + str(cv_mean_iou))
     print("Mean of Intersection over Union using our CNN = " + str(cnn_mean_iou))
+    
+    cv_mean_abs_error = getMAE(cv_bboxes, label_bboxes)
+    cnn_mean_abs_error = getMAE(cnn_bboxes, label_bboxes)
+    print("Mean of Absolute Error using OpenCV = " + str(cv_mean_abs_error))
+    print("Mean of Absolute Error using our CNN = " + str(cnn_mean_abs_error))
 
 
 main()
