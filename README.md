@@ -208,6 +208,8 @@ These tests was done by running both algorithms for all images found on sample_i
 
 * The Intersection Over Union metric is commonly used to measure the accuracy of bounding boxes detectors like ours. It works by dividing the intersection of two bounding boxes by the union of them.
 
+* The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes points divided by the amount of points (4x amount of images).
+
 <img src="https://www.pyimagesearch.com/wp-content/uploads/2016/09/iou_equation.png" width="300" height="234" />
 
 ---
