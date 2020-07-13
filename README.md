@@ -423,6 +423,7 @@ All the metrics obtained during training are visible through tensorboard, at [ex
     * Ran many experiments
     * Wrote camera code sample
     * Wrote tensorboard sample
+    * Wrote tests to several scripts
 
 - Guilherme Hideo Tubone (NUSP 9019403)
     * Wrote face detection using OpenCV, and its code sample

@@ -6,6 +6,7 @@ import os
 
 
 
+# Uses tensorflows generator to serve data to the bounding box model
 def get_bboxs_generator(bboxs_df, imgs_dir="../data/Img_Resize", batch_size=32,
                     out_image_size=(56, 56), resize_inter='bilinear',
                     color_mode='rgb', rescale=1.0/255.0, preprocess_func=None,
@@ -85,6 +86,7 @@ def normalize_255(imgs):
 
 
 
+# Uses a custom generator to serve data to the bounding box model
 class BBoxsGenerator(Sequence):
     def __init__(self, bboxs_df, imgs_dir="../data/Img_Resize",
                 batch_size=32,
@@ -123,6 +125,7 @@ class BBoxsGenerator(Sequence):
 
 
 
+# Uses a custom generator to serve data to the triplet training model
 class TripletTrainGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_n_indvs=4, batch_indv_n_imgs=4,
@@ -156,6 +159,8 @@ class TripletTrainGenerator(Sequence):
 
 
 
+# Uses a custom generator to serve data to the triplet
+# distance measuring model
 class TripletDistancesGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_size=32,
@@ -192,6 +197,8 @@ class TripletDistancesGenerator(Sequence):
 
 
 
+# Uses a custom generator to serve data to the classifier model
+# based on thresholds
 class TripletClassifierGenerator(Sequence):
     def __init__(self, indvs_df, min_indv_imgs=5, imgs_dir="../data/Img_Crop_Resize",
                 batch_size=32,
@@ -229,6 +236,7 @@ class TripletClassifierGenerator(Sequence):
 
 
 
+#Tests
 if __name__ == '__main__':
     import shutil
     import pandas as pd
