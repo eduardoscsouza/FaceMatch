@@ -289,11 +289,11 @@ To compare the results of our Face Detector Models with OpenCV's Face Detector w
 
 These tests was done by running both algorithms for all images found on sample_imgs/raw.
 
-|                         | Regular Model     | Model using Depth-Wise Separable Convolution | OpenCV            |
-|-------------------------|-------------------|----------------------------------------------|-------------------|
-| Running time (seconds)  | 12.455038         | 7.462625                                     | 13.410666         |
-| Intersection over Union | 0.74141621        | 0.73826022                                   | 0.69251639        |
-| Mean Absolute Error     | 0.11603838        | 0.11802663                                   | 0.13947525        |
+|                                 | Regular Model | Model using Depth-Wise Separable Convolution | Model with Augmented Data | Model with Augmented Data using Depth-Wise Separable Convolution | OpenCV  |
+|---------------------------------|---------------|----------------------------------------------|---------------------------|------------------------------------------------------------------|---------|
+| Running time (seconds)          | 45.81         | 29.28                                        | 57.07                     | 31.03                                                            | 55.82   |
+| Mean of Intersection over Union | 0.85160       | 0.83353                                      | 0.83756                   | 0.81453                                                          | 0.70790 |
+| Mean Absolute Error             | 0.01681       | 0.01920                                      | 0.01832                   | 0.02145                                                          | 0.12914 |
 
 * The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes points divided by the amount of points (4x amount of images).
 
