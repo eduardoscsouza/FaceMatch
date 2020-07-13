@@ -157,6 +157,13 @@ Finally, we implemented the canny edges detector, with a sample notebook at [sam
 
 # **Final Report**
 
+## **Data Used**
+
+## **Steps**
+
+### **1. Dataset Filtering and Preprocessing**
+
+
 ### **2. Image Preprocessing**
 
 **Data augmentation**
@@ -171,6 +178,16 @@ Example:
 
 <img src="https://i.ibb.co/fnch6V6/2.png" width="210" height="300" /> <img src="https://i.ibb.co/CQzzPnM/000002.jpg" width="210" height="300" />
 
+
+### **3. Face Segmentation**
+
+
+### **4. Face Feature Vector Generation**
+
+
+### **5. Face Verification**
+
+## **Code and Results**
 
 
 ---
