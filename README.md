@@ -285,7 +285,7 @@ Where f is the feature extraction function, A is the anchor, P is the positive e
 
 *Image 7 - Graphical Representation of the Triplet Loss. [Original Source of the Image](https://arxiv.org/pdf/1503.03832.pdf)*
 
-The distance function in this sceneario is the euclidian distance. We used as distance functions for our models the euclidian distance squared, and the cossine distance. Here are the training graphs:
+The distance function in this scenario is the euclidian distance. We used as distance functions for our models the euclidian distance squared, and the cossine distance. Here are the training graphs:
 
 <img src="./sample_imgs/triplet-eucl.svg" height="350"></img>
 
