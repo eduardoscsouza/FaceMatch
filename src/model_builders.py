@@ -38,6 +38,7 @@ def __stateless_bbox_iou__(y_true, y_pred):
 
     return __stateless_x2y2_bbox_iou__(y_true, y_pred)
 
+# Returns the IoU metric
 class MeanBBoxIoU(MeanMetricWrapper):
     def __init__(self, name='mean_bbox_iou', dtype=None, x2y2=False, **kwargs):
         bbox_iou_func = __stateless_x2y2_bbox_iou__ if x2y2 else __stateless_bbox_iou__
@@ -45,6 +46,7 @@ class MeanBBoxIoU(MeanMetricWrapper):
 
 
 
+# Build a model that returns the face's bounding box location
 def build_bbox_model(input_size=(56, 56, 3),
                     n_conv_blocks=3, base_conv_n_filters=16,
                     n_dense_layers=2, dense_size=256, dropout_rate=0.25,
@@ -69,6 +71,8 @@ def build_bbox_model(input_size=(56, 56, 3),
 
     return model
 
+# Build a model that returns the face's bounding box location,
+# using depthwise separable convolutions
 def build_bbox_separable_model(input_size=(56, 56, 3),
                     n_conv_blocks=3, base_conv_n_filters=16,
                     n_dense_layers=2, dense_size=256, dropout_rate=0.25,
@@ -95,6 +99,7 @@ def build_bbox_separable_model(input_size=(56, 56, 3),
 
 
 
+# Builds an extractor using the trained weights of a VGG16 model
 def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor"):
     with tf.name_scope(name) as scope:
         model_in = Input(shape=(224, 224, 3), name="input")
@@ -144,6 +149,7 @@ def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights
 
 
 
+# Layer that normalized a vector
 class L2Normalization(Layer):
     def __init__(self, name=None, **kwargs):
         kwargs.update({"trainable":False})
@@ -152,6 +158,7 @@ class L2Normalization(Layer):
     def call(self, x):
         return tf.math.l2_normalize(x, axis=1)
 
+# Add the normalization layer to a model
 def add_l2_norm(extractor_model):
     with tf.name_scope(extractor_model.name) as scope:
         l2_norm = L2Normalization(name="l2_normalization")(extractor_model.output)
@@ -161,6 +168,7 @@ def build_vgg16_triplet_extractor(vgg_weights_filepath="../data/vgg_face_weights
     extractor_model = build_vgg16_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx, name=name)
     return add_l2_norm(extractor_model)
 
+# Prepares a extractor model to be trained using the Triplet Loss
 def build_triplet_training_model(extractor_model, dist_type='eucl', alpha=1.0, optimizer=Adamax()):
     triplet_loss = tfa.losses.TripletSemiHardLoss(margin=alpha, distance_metric='angular' if (dist_type=='cos') else 'L2', name="triplet_loss")
     extractor_model.compile(optimizer=optimizer, loss=triplet_loss)
@@ -168,6 +176,7 @@ def build_triplet_training_model(extractor_model, dist_type='eucl', alpha=1.0, o
 
 
 
+# Calculates the cossine distance between 2 input vectors
 class CosineDistance(Layer):
     def __init__(self, name=None, dtype='float32', **kwargs):
         kwargs.update({"trainable":False})
@@ -181,6 +190,7 @@ class CosineDistance(Layer):
         dist = self.aux_one - tf.math.divide_no_nan(mult, norm_mult)
         return dist
 
+# Calculates the squared euclidian distance between 2 input vectors
 class EuclidianDistanceSquared(Layer):
     def __init__(self, name=None, dtype='float32', **kwargs):
         kwargs.update({"trainable":False})
@@ -191,6 +201,7 @@ class EuclidianDistanceSquared(Layer):
         dist = tf.reduce_sum(tf.square(anch - comp), axis=1, keepdims=True)
         return dist
 
+# Calculates the triplet loss for 3 input vectors
 class TripletLoss(Layer):
     def __init__(self, alpha=1.0, name=None, dtype='float32', **kwargs):
         kwargs.update({"trainable":False})
@@ -206,6 +217,7 @@ class TripletLoss(Layer):
     def get_config(self):
         return {"alpha":float(self.alpha), "name":self.name, "dtype":self.dtype}
 
+# Build a model to analize the distances between vectors
 def build_triplet_distances_model(extractor_model, dist_type='eucl', alpha=1.0, add_loss=False):
     anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
     anchor_out = extractor_model(anchor_in)
@@ -235,6 +247,7 @@ def build_triplet_distances_model(extractor_model, dist_type='eucl', alpha=1.0, 
     triplet_model.compile(optimizer=Adamax(), loss=None)
     return triplet_model
 
+# Build a model to classify images based on the distance between vectors
 def build_triplet_classifier_model(extractor_model, dist_type='eucl', threshold=1.0):
     anchor_in = Input(shape=(224, 224, 3), name="anchor_in")
     anchor_out = extractor_model(anchor_in)
@@ -256,6 +269,7 @@ def build_triplet_classifier_model(extractor_model, dist_type='eucl', threshold=
 
 
 
+#Testing
 if __name__ == '__main__':
     m = build_triplet_training_model(build_vgg16_triplet_extractor())
     m.summary()

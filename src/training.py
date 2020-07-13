@@ -6,6 +6,8 @@ import gc
 
 
 
+# Trains a model, saving the best model during training
+# and saving logs to tensorboard
 def train_model(model, train_datagen, val_datagen,
                 epochs=1000, steps_per_epoch=200, validation_steps=100,
                 tensorboard_logdir="../experiments/tensorboard_logs",
@@ -55,11 +57,13 @@ def train_model(model, train_datagen, val_datagen,
 
 
 
+# Evaluateas a model with its internal metrics
 def evaluate_model(model, datagen, evaluation_steps=2000, generator_queue_size=15, generator_workers=1, use_multiprocessing=True):
     return model.evaluate(datagen, steps=evaluation_steps, callbacks=None,
                         max_queue_size=generator_queue_size, workers=generator_workers, use_multiprocessing=use_multiprocessing,
                         verbose=False)
 
+# Generetas a dataframe from a list of metrics
 def get_evaluation_df(model, eval_metrics, include_loss=True):
     metrics_cols = [' '.join([word.capitalize() for word in metric.split('_')]) for metric in model.metrics_names]
     if not include_loss:
@@ -70,11 +74,13 @@ def get_evaluation_df(model, eval_metrics, include_loss=True):
 
 
 
+# Combines metrics dataframes
 def combine_train_val_dfs(train_df, val_df):
     df = pd.concat([train_df, val_df], ignore_index=True)
     df.insert(0, "Set", ["Train", "Val"])
     return df
 
+# Runs an experiment, by training and evaluating a model
 def run_experiment(model, exp_name, train_datagen, val_datagen,
                 results_dir="../experiments/results",
                 epochs=1000, steps_per_epoch=200, validation_steps=50,
@@ -110,6 +116,9 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
 
 
 
+# Evaluatioan specific for the triplet model
+# Calculates the mean distances, and generates a classifier
+# using those distances to get a threshold for classification
 def evaluate_triplet(extractor_model, exp_name,
                     dist_train_datagen, dist_val_datagen, class_train_datagen, class_val_datagen,
                     dist_type='eucl', alpha=1.0,
