@@ -176,9 +176,13 @@ We reorganized and reformated the original dataset to better suit our needs and 
 
 Our model wasn't generating good results when the face was on the bottom part of the image. That is because in most images of the dataset, the face is on the upper part. To solve that, we used a data augmentation technique, by translating the image randomly, without taking the face bounding box out of the image. After the translation, the image would contain an empty part (section that wasn't on the original image). To fix that we filled those parts with the closest edge color of the original image.
 
-<img src="https://i.ibb.co/fnch6V6/2.png" width="210" height="300" /> <img src="https://i.ibb.co/CQzzPnM/000002.jpg" width="210" height="300" />
+<img src="sample_imgs/not_augmented.jpg" width="210" height="300"></img>
 
-*Image 1 - Translation Augmentation Example*
+*Image 1 - Not Augmented Image*
+
+<img src="sample_imgs/augmented.png" width="210" height="300"></img>
+
+*Image 2 - Image 1 Augmented with Translation, Keeping the Correct Bounding Box*
 
 More examples can be found [here]("./sample_code/DataAugmentationTranslation.ipynb").
 
@@ -247,6 +251,20 @@ For each type of convolution, we tried several different hyperparameters configu
 
 We then chose the best ones to improve with the data augmentation and image preprocessing described above.
 
+#### *Comparison with OpenCV solution*
+
+To evaluate our models results, we compared them to OpenCV's Face Detector. We used three different metrics: the Running Time, Intersection Over Union and Mean Absolute Error. The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes, divided by the amount of points (4 time the amount of images).
+
+The running time was obtained by running the algorithms on 500 random images from ["data/Img"](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics obtained during training. We limited our models to run on a sinlge CPU core, for a more fair comparison.
+
+|                                 | Regular Model | Model using Depth-Wise Separable Convolution | Model with Augmented Data | Model with Augmented Data using Depth-Wise Separable Convolution | OpenCV  |
+|---------------------------------|---------------|----------------------------------------------|---------------------------|------------------------------------------------------------------|---------|
+| Running time (seconds)          | 45.81         | 29.28                                        | 57.07                     | 31.03                                                            | 55.82   |
+| Mean of Intersection over Union | 0.85160       | 0.83353                                      | 0.83756                   | 0.81453                                                          | 0.70790 |
+| Mean Absolute Error             | 0.01681       | 0.01920                                      | 0.01832                   | 0.02145                                                          | 0.12914 |
+
+*Table 5 - Bounding Box Detection Comparison*
+
 
 
 ### **4. Face Feature Vector Generation**
@@ -311,23 +329,6 @@ We used this as a classifier and extracted some metrics.
 
 *Table 8 - Classifier Using The Cossine Distance*
 
-
-
-## **Code and Results**
-
-**Comparison with OpenCV solution**
-
-To compare the results of our Face Detector Models with OpenCV's Face Detector we used three different metrics: the Running Time, Intersection Over Union and Mean Absolute Error.
-
-These tests was done by running both algorithms for all images found on sample_imgs/raw.
-
-|                                 | Regular Model | Model using Depth-Wise Separable Convolution | Model with Augmented Data | Model with Augmented Data using Depth-Wise Separable Convolution | OpenCV  |
-|---------------------------------|---------------|----------------------------------------------|---------------------------|------------------------------------------------------------------|---------|
-| Running time (seconds)          | 45.81         | 29.28                                        | 57.07                     | 31.03                                                            | 55.82   |
-| Mean of Intersection over Union | 0.85160       | 0.83353                                      | 0.83756                   | 0.81453                                                          | 0.70790 |
-| Mean Absolute Error             | 0.01681       | 0.01920                                      | 0.01832                   | 0.02145                                                          | 0.12914 |
-
-* The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes points divided by the amount of points (4x amount of images).
 
 
 ---
