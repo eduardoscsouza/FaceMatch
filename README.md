@@ -14,6 +14,8 @@ This project aims to build a system capable of, given two images, determine if b
 
 
 
+# **Partial Report - Kept For Comparison**
+
 ## **Main Objective**
 As stated in the abstract, our objective is to create a system capable of verifying if 2 images of people have the face of the same person in them. Therefore the main objective can be broken down into two parts:
 
@@ -150,6 +152,10 @@ Finally, we implemented the canny edges detector, with a sample notebook at [sam
 <img src="sample_imgs/canny_sample.png" width="250" height="250"></img>
 
 *Image 9 - Canny Edge Detection Sample*
+
+
+
+# **Final Report**
 
 
 
