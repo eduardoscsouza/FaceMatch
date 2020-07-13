@@ -194,27 +194,21 @@ More examples can be found at this [link](https://github.com/eduardoscsouza/Face
 
 ## **Code and Results**
 
-**Comparison with OpenCV solution (Running time)**
+**Comparison with OpenCV solution**
 
-To compare the results of our Face Detector Model with OpenCV's Face Detector we measured the running time of both solutions.
+To compare the results of our Face Detector Models with OpenCV's Face Detector we used three different metrics: the Running Time, Intersection Over Union and Mean Absolute Error.
 
-This test was done by running both algorithms for all images found on sample_imgs/raw.
+These tests was done by running both algorithms for all images found on sample_imgs/raw.
 
-Running time of our solution: 
+|                         | Regular Model     | Model using Depth-Wise Separable Convolution | OpenCV            |
+|-------------------------|-------------------|----------------------------------------------|-------------------|
+| Running time (seconds)  | 12.455038         | 7.462625                                     | 13.410666         |
+| Intersection over Union | 0.74141621        | 0.73826022                                   | 0.69251639        |
+| Mean Absolute Error     | 0.11603838        | 0.11802663                                   | 0.13947525        |
 
-Running time of OpenCV's solution:
-
-**Comparison with OpenCV solution (Intersection over Union)**
-
-Another way to compare the results of our Face Detector Model with OpenCV's Face Detector we used the Intersection Over Union (IoU) metric. This metric is commonly used to measure the accuracy of bounding boxes detectors like ours.
-
-This test was done by running both algorithms for all images found on sample_imgs/raw.
+* The Intersection Over Union metric is commonly used to measure the accuracy of bounding boxes detectors like ours. It works by dividing the intersection of two bounding boxes by the union of them.
 
 <img src="https://www.pyimagesearch.com/wp-content/uploads/2016/09/iou_equation.png" width="300" height="234" />
-
-IoU of our solution:
-
-IoU of OpenCV's solution:
 
 ---
 
