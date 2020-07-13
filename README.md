@@ -178,11 +178,11 @@ Our model wasn't generating good results when the face was on the bottom part of
 
 <img src="sample_imgs/not_augmented.jpg" width="210" height="300"></img>
 
-*Image 1 - Not Augmented Image*
+*Image 1.1 - Original Image*
 
 <img src="sample_imgs/augmented.png" width="210" height="300"></img>
 
-*Image 2 - Image 1 Augmented with Translation, Keeping the Correct Bounding Box*
+*Image 1.2 - Image 1.1 Augmented with Translation, Keeping the Correct Bounding Box*
 
 More examples can be found [here]("./sample_code/DataAugmentationTranslation.ipynb").
 
@@ -218,7 +218,7 @@ We tested changes in the color domain and the canny edge detector to try to impr
 |Train|0.018834181129932404 |0.10289715230464935|0.4456730782985687|
 |Val|0.018753744661808014 |0.10262654721736908|0.44477757811546326|
 
-*Table 4 - Using the canny edge detector*
+*Table 4 - Using the Canny Edge Detector*
 
 
 
@@ -255,7 +255,7 @@ We then chose the best ones to improve with the data augmentation and image prep
 
 To evaluate our models results, we compared them to OpenCV's Face Detector. We used three different metrics: the Running Time, Intersection Over Union and Mean Absolute Error. The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes, divided by the amount of points (4 time the amount of images).
 
-The running time was obtained by running the algorithms on 500 random images from ["data/Img"](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics obtained during training. We limited our models to run on a sinlge CPU core, for a more fair comparison.
+The running time was obtained by running the algorithms on 500 random images from [data/Img](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics obtained during training. We limited our models to run on a sinlge CPU core, for a more fair comparison.
 
 |                                 | Regular Model | Model using Depth-Wise Separable Convolution | Model with Augmented Data | Model with Augmented Data using Depth-Wise Separable Convolution | OpenCV  |
 |---------------------------------|---------------|----------------------------------------------|---------------------------|------------------------------------------------------------------|---------|
@@ -296,7 +296,7 @@ The distance function in this scenario is the euclidian distance. We used as dis
 |Train|0.5728581547737122|1.745187759399414 |0.22523514926433563|
 |Val  |0.6698782444000244|1.7403087615966797|0.2757253348827362|
 
-*Table 5 - Distances Using The Euclidian Distance*
+*Table 6 - Distances Using The Euclidian Distance*
 
 <img src="./sample_imgs/triplet-cos.svg" height="350"></img>
 
@@ -307,7 +307,7 @@ The distance function in this scenario is the euclidian distance. We used as dis
 |Train|0.445333868265152 |0.8501749038696289|0.595158576965332|
 |Val  |0.4381791949272156|0.8464183807373047|0.59176105260849 |
 
-*Table 6 - Distances Using The Cossine Distance*
+*Table 7 - Distances Using The Cossine Distance*
 
 
 
@@ -320,14 +320,52 @@ We used this as a classifier and extracted some metrics.
 |Train|0.8604687452316284|0.871737003326416 |0.8453124761581421|14010.0       |1990.0         |2475.0         |13525.0       |
 |Val  |0.8305624723434448|0.8596084117889404|0.7892890572547913|13977.0       |2058.0         |3364.0         |12601.0       |
 
-*Table 7 - Classifier Using The Euclidian Distance*
+*Table 8 - Classifier Using The Euclidian Distance*
 
 |Set  |Binary Accuracy   |Precision         |Recall            |True Negatives|False Positives|False Negatives|True Positives|
 |-----|------------------|------------------|------------------|--------------|---------------|---------------|--------------|
 |Train|0.7213125228881836|0.7808796763420105|0.6143545508384705|13264.0       |2755.0         |6163.0         |9818.0        |
 |Val  |0.722406268119812 |0.77568119764328  |0.6221036314964294|13210.0       |2865.0         |6018.0         |9907.0        |
 
-*Table 8 - Classifier Using The Cossine Distance*
+*Table 9 - Classifier Using The Cossine Distance*
+
+
+
+## **Conclusions and Considerations**
+With regards to the segmentaion aspect of the project, our final models showed good performance. They were both faster and more precise then OpenCV's. However, our models only detect a single face in an image, not multiple. This is sutible for many situations, for example unlocking a phone, but not all situatiuons, for example monitoring a street.
+
+For the segmentation, we had 4 final models, in a combination of being trained using the translation augmentation, and using the depthwise separable convolutions. The augmented models had a worse performance in the dataset, but probably have a better performance in a real world scenario, but we can't test it at this moment. The models using depthwise separable convolutions have a slightly worse performance, but much lower computational cost, therefore they are more suited for situations where low computational cost and response time are more relevant, such as real-time segmentation, and embedded systems.
+
+With regards to the verification aspect of the project, our final models showed good performance, but could be better, with the euclidian distance model showing better performance. We focoused more on the former aspect of the project, so our verification is not as refined. One major improvement would be define the distance threshold in a more sophisticated way. They way we are currently doing doesn't take in consideration the distance distribution as a whole, just the mean. Still the verification works quite well. One notable failure is with oclusion, as shown in the images below.
+
+
+
+## **Sample Code and Results**
+
+<img src="./sample_imgs/camera_seg.png" height="300" width="400"></img>
+
+*Image 10 - Bounding Box Detection Example*
+
+<img src="./sample_imgs/success_easy.png" height="350" width="400"></img>
+
+*Image 11.1 - Succesful Verification*
+
+<img src="./sample_imgs/success_hard.png" height="350" width="400"></img>
+
+*Image 11.2 - Succesful Verification at an Angle*
+
+<img src="./sample_imgs/fail_easy.png" height="350" width="400"></img>
+
+*Image 12.1 - Unsuccesful Verification with little occlusion*
+
+<img src="./sample_imgs/fail_hard.png" height="350" width="400"></img>
+
+*Image 12.2 - Unsuccesful Verification with high occlusion*
+
+
+This images were extracted using [this jupyter notebook](./sample_code/FinalReportDemonstration.ipynb). It is a sample where our models are run using a webcam as input. For it to work, the environment defined in [env.yml](./env.yml) should be installed, using conda.
+
+All trained models are available at our [Google Drive](https://drive.google.com/drive/folders/1R3cb0nj81Y21L5N6LgH9R_AdeinWRQHC?usp=sharing) (the files were too big to add to this repository). All the metrics csv's are available at [experiments/results](./experiments/results).
 
 
 
