@@ -160,6 +160,7 @@ Finally, we implemented the canny edges detector, with a sample notebook at [sam
 ### **2. Image Preprocessing**
 
 **Data augmentation**
+
 Our model wasn't generating good results when the face was on the bottom part of the image. That is because in most images of the dataset, the face is on the upper part.
 
 Because of that, we used a data augmentation technique, by translating the image randomly, without taking the face bounding box out of the image.
@@ -167,7 +168,8 @@ Because of that, we used a data augmentation technique, by translating the image
 After the translation, the image would contain an empty part (section that wasn't on the original image). To fix that we filled those parts with the closest edge color of the original image.
 
 Example:
-![Translated image 1](https://i.ibb.co/fnch6V6/2.png =210x300) ![Original image 1](https://i.ibb.co/CQzzPnM/000002.jpg)
+
+<img src="https://i.ibb.co/fnch6V6/2.png" width="210" height="300" /> <img src="https://i.ibb.co/CQzzPnM/000002.jpg" width="210" height="300" />
 
 
 
