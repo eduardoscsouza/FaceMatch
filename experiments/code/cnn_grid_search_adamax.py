@@ -8,7 +8,7 @@ gpus = tf.config.list_physical_devices(device_type='GPU')
 for gpu in gpus:
     try:
         #tf.config.experimental.set_memory_growth(gpu, True)
-        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=4500)])
+        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6500)])
     except RuntimeError as e:
         print(e)
 
@@ -60,8 +60,8 @@ for img_size in [56, 112, 224]:
                             shutil.rmtree(aux_tensorboard_dir)
 
                         train_df, val_df, _ = get_train_val_test_dfs(bboxs_csv, splits_csv)
-                        train_datagen = BBoxsGenerator(train_df, imgs_dir=imgs_dir, out_image_size=(img_size, img_size), resize=(img_size!=224), batch_size=16)
-                        val_datagen = BBoxsGenerator(val_df, imgs_dir=imgs_dir, out_image_size=(img_size, img_size), resize=(img_size!=224), batch_size=16)
+                        train_datagen = BBoxsGenerator(train_df, imgs_dir=imgs_dir, out_image_size=(img_size, img_size), resize=(img_size!=224))
+                        val_datagen = BBoxsGenerator(val_df, imgs_dir=imgs_dir, out_image_size=(img_size, img_size), resize=(img_size!=224))
                         del train_df, val_df
                         gc.collect()
 
