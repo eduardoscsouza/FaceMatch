@@ -255,7 +255,7 @@ We then chose the best ones to improve with the data augmentation and image prep
 
 To evaluate our models results, we compared them to OpenCV's Face Detector. We used three different metrics: the Running Time, Intersection Over Union and Mean Absolute Error. The Mean Absolute Error is the sum of the absolute differences of all points of the predicted bounding boxes and the original bounding boxes, divided by the amount of points (4 time the amount of images).
 
-The running time was obtained by running the algorithms on 500 random images from [data/Img](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics obtained during training. We limited our models to run on a sinlge CPU core, for a more fair comparison.
+The running time was obtained by running the algorithms on 500 random images from [data/Img](./data/Img/), belonging to the validation set. The metrics for OpenCV's algorithm were also obtained with these images. For our models, we used the metrics obtained during training. We limited our models to run on a single CPU core, for a more fair comparison.
 
 |                                 | Regular Model | Model using Depth-Wise Separable Convolution | Model with Augmented Data | Model with Augmented Data using Depth-Wise Separable Convolution | OpenCV  |
 |---------------------------------|---------------|----------------------------------------------|---------------------------|------------------------------------------------------------------|---------|
@@ -332,11 +332,11 @@ We used this as a classifier and extracted some metrics.
 
 
 ## **Conclusions and Considerations**
-With regards to the segmentaion aspect of the project, our final models showed good performance. They were both faster and more precise then OpenCV's. However, our models only detect a single face in an image, not multiple. This is sutible for many situations, for example unlocking a phone, but not all situatiuons, for example monitoring a street.
+With regards to the segmentation aspect of the project, our final models showed good performance. They were both faster and more precise then OpenCV's. However, our models only detect a single face in an image, not multiple. This is sutible for many situations, for example unlocking a phone, but not all situatiuons, for example monitoring a street.
 
 For the segmentation, we had 4 final models, in a combination of being trained using the translation augmentation, and using the depthwise separable convolutions. The augmented models had a worse performance in the dataset, but probably have a better performance in a real world scenario, but we can't test it at this moment. The models using depthwise separable convolutions have a slightly worse performance, but much lower computational cost, therefore they are more suited for situations where low computational cost and response time are more relevant, such as real-time segmentation, and embedded systems.
 
-With regards to the verification aspect of the project, our final models showed good performance, but could be better, with the euclidian distance model showing better performance. We focoused more on the former aspect of the project, so our verification is not as refined. One major improvement would be define the distance threshold in a more sophisticated way. They way we are currently doing doesn't take in consideration the distance distribution as a whole, just the mean. Still the verification works quite well. One notable failure is with oclusion, as shown in the images below.
+With regards to the verification aspect of the project, our final models showed good performance, but could be better, with the euclidian distance model showing better performance. We focused more on the former aspect of the project, so our verification is not as refined. One major improvement would be define the distance threshold in a more sophisticated way. They way we are currently doing doesn't take in consideration the distance distribution as a whole, just the mean. Still the verification works quite well. One notable failure is with oclusion, as shown in the images below.
 
 
 
@@ -373,12 +373,12 @@ All trained models are available at our [Google Drive](https://drive.google.com/
 - Eduardo Santos Carlos de Souza (NUSP 9293481)
     * Wrote model building code
     * Wrote model training code
-    * Wrote data generators for trainig
+    * Wrote data generators for training
     * Preprocessed and organized data
     * Ran many experiments
 
 - Guilherme Hideo Tubone (NUSP 9019403)
-    * Wrote face detectio using OpenCV, and its code sample
+    * Wrote face detection using OpenCV, and its code sample
     * Implemented Canny Edge Detector and its code sample
     * Created benchmarks to measure running time
     * Measured intersection-over-union and mean absolute error for the OpenCV model
