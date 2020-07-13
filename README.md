@@ -184,7 +184,7 @@ Our model wasn't generating good results when the face was on the bottom part of
 
 *Image 1.2 - Image 1.1 Augmented with Translation, Keeping the Correct Bounding Box*
 
-More examples can be found [here]("sample_code/DataAugmentationTranslation.ipynb").
+More examples can be found [here](./sample_code/DataAugmentationTranslation.ipynb).
 
 #### **Resizing**
 Our CNN models only take inputs of a specific size. So we need to resize the image to the correct size. This resizing needs to be done for every bacth of training, and when executing, so we decided to use the bilinear interpolation for its relative low computational cost.
