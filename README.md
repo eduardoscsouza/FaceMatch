@@ -185,6 +185,37 @@ More examples can be found [here]("./sample_code/DataAugmentationTranslation.ipy
 #### **Resizing**
 Our CNN models only take inputs of a specific size. So we need to resize the image to the correct size. This resizing needs to be done for every bacth of training, and when executing, so we decided to use the bilinear interpolation for its relative low computational cost.
 
+#### **Failed Preprocessing**
+We tested changes in the color domain and the canny edge detector to try to improve our results. They either made the results worse, of didn't improve significantly, so they were not used. Here are their results:
+
+|Set|Loss                 |Mean Absolute Error|Mean Bbox Iou     |
+|---|---------------------|-------------------|------------------|
+|Train|0.0005421281675808132|0.015870939940214157|0.8575448989868164|
+|Val|0.0006855816463939847|0.01681641675531864|0.8516016006469727|
+
+*Table 1 - Base Metrics*
+
+|Set|Loss                 |Mean Absolute Error|Mean Bbox Iou     |
+|---|---------------------|-------------------|------------------|
+|Train|0.00053440808551386  |0.015981484204530716|0.8573797941207886|
+|Val|0.0006816008244641125|0.016900835558772087|0.8512943983078003|
+
+*Table 2 - Changing color from RGB to HSV*
+
+|Set|Loss                 |Mean Absolute Error|Mean Bbox Iou     |
+|---|---------------------|-------------------|------------------|
+|Train|0.0005476800724864006|0.016084963455796242|0.8568638563156128|
+|Val|0.0007178573287092149|0.017143426463007927|0.8505929708480835|
+
+*Table 3 - Changing color from RGB to Grayscale*
+
+|Set|Loss                 |Mean Absolute Error|Mean Bbox Iou     |
+|---|---------------------|-------------------|------------------|
+|Train|0.018834181129932404 |0.10289715230464935|0.4456730782985687|
+|Val|0.018753744661808014 |0.10262654721736908|0.44477757811546326|
+
+*Table 4 - Using the canny edge detector*
+
 
 
 ### **3. Face Segmentation**
@@ -219,6 +250,33 @@ We then chose the best ones to improve with the data augmentation and image prep
 
 
 ### **4. Face Feature Vector Generation**
+With the face segmented, we need to generate a feature vector capable of differenciating people. To achieve that, we used a pre-treined CNN to extract such feature vector. We got the pre-trained weights from [this link](https://drive.google.com/file/d/1CPSeum3HpopfomUEK1gybeuIVoeJT_Eo/view), originally provided on [this webpage](https://sefiks.com/2018/08/06/deep-face-recognition-with-keras/)
+
+This CNN was originally trained on a classical classification problem, having to classify to whom, in a set of 2622 people, an image belonged. As such, we can't use it directly. To use it, we get the output of the last layer before the classification layer, and use it as an feature extractor.
+
+#### *Triple Loss*
+To fine tune the feature extraction, we trained the extractor using the triplet loss. Here is its equation:
+
+<img src="./sample_imgs/triplet_formula.svg" width="400" height="100"></img>
+
+*Image 6 - Mathematical Equation of the Triplet Loss. [Original Source of the Image](https://en.wikipedia.org/wiki/Triplet_loss#:~:text=Triplet%20loss%20is%20a%20loss,a%20negative%20(falsy)%20input.)*
+
+Where f is the feature extraction function, A is the anchor, P is the positive example (same person as A), and N is the negative example (different person than A), and *alpha* is a constant value. As such, as this loss decreases, the distances between images of the same person decrease, and the distances between images of the different people increase.
+
+<img src="./sample_imgs/triplet_graph.png" width="500" height="150"></img>
+
+*Image 7 - Graphical Representation of the Triplet Loss. [Original Source of the Image](https://arxiv.org/pdf/1503.03832.pdf)*
+
+The distance function in this sceneario is the euclidian distance. We used as distance functions for our models the euclidian distance squared, and the cossine distance. Here are the training graphs:
+
+<img src="./sample_imgs/triplet-eucl.svg" height="350"></img>
+
+*Image 8 - Euclidian Distance Triplet over training. Blue line is validation data, and orange is training*
+
+<img src="./sample_imgs/triplet-cos.svg" height="350"></img>
+
+*Image 9 - Cossine Distance Triplet over training. Green line is validation data, and pink is training*
+
 
 
 ### **5. Face Verification**
