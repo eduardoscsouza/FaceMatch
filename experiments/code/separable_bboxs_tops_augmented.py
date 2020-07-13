@@ -8,7 +8,7 @@ gpus = tf.config.list_physical_devices(device_type='GPU')
 for gpu in gpus:
     try:
         #tf.config.experimental.set_memory_growth(gpu, True)
-        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6500)])
+        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6000)])
     except RuntimeError as e:
         print(e)
 
