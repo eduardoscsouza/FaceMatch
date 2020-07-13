@@ -199,7 +199,7 @@ We decided to use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
 
 <img src="sample_imgs/segmented/true/000050.jpg" width="250" height="250"></img>
 
-*Image 15.2 - Image 13.2 segmented with bounding box annotation*
+*Image 15.2 - Image 14.2 segmented with bounding box annotation*
 
 The data is too big for this repository, so we uploaded it to a [Google Drive folder](https://drive.google.com/open?id=1hyYXqt3cPbxsjqjWoT4iSwf806Kri0ic).
 
