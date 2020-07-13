@@ -159,6 +159,9 @@ Finally, we implemented the canny edges detector, with a sample notebook at [sam
 
 ## **Data Used**
 
+We ended up using the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) dataset, because of the reasons mentioned on the Partial Report:
+
+
 ## **Steps**
 
 ### **1. Dataset Filtering and Preprocessing**
@@ -191,6 +194,27 @@ More examples can be found at this [link](https://github.com/eduardoscsouza/Face
 
 ## **Code and Results**
 
+**Comparison with OpenCV solution (Running time)**
+
+To compare the results of our Face Detector Model with OpenCV's Face Detector we measured the running time of both solutions.
+
+This test was done by running both algorithms for all images found on sample_imgs/raw.
+
+Running time of our solution: 
+
+Running time of OpenCV's solution:
+
+**Comparison with OpenCV solution (Intersection over Union)**
+
+Another way to compare the results of our Face Detector Model with OpenCV's Face Detector we used the Intersection Over Union (IoU) metric. This metric is commonly used to measure the accuracy of bounding boxes detectors like ours.
+
+This test was done by running both algorithms for all images found on sample_imgs/raw.
+
+<img src="https://www.pyimagesearch.com/wp-content/uploads/2016/09/iou_equation.png" width="300" height="234" />
+
+IoU of our solution:
+
+IoU of OpenCV's solution:
 
 ---
 
