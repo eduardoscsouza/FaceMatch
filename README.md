@@ -186,7 +186,7 @@ More examples can be found [here]("./sample_code/DataAugmentationTranslation.ipy
 Our CNN models only take inputs of a specific size. So we need to resize the image to the correct size. This resizing needs to be done for every bacth of training, and when executing, so we decided to use the bilinear interpolation for its relative low computational cost.
 
 #### **Failed Preprocessing**
-We tested changes in the color domain and the canny edge detector to try to improve our results. They either made the results worse, of didn't improve significantly, so they were not used. Here are their results:
+We tested changes in the color domain and the canny edge detector to try to improve our results. They either made the results worse, or didn't improve significantly, so they were not used. Here are their results:
 
 |Set|Loss                 |Mean Absolute Error|Mean Bbox Iou     |
 |---|---------------------|-------------------|------------------|
@@ -219,7 +219,7 @@ We tested changes in the color domain and the canny edge detector to try to impr
 
 
 ### **3. Face Segmentation**
-We used CNN's to predict the bounding box of the face. Our CNN's receive an unsegmented image as input, and return 4 real number between 0 and 1. Those numbers are the relavant positions, repectevely, of the left, upper, right, and lower edges of the bouding box.
+We used CNN's to predict the bounding box of the face. Our CNN's receive an unsegmented image as input, and return 4 real number between 0 and 1. Those numbers are the relevant positions, repectevely, of the left, upper, right, and lower edges of the bounding box.
 
 #### **Depthwise Separable Convolutions**
 We used 2 different versions of our CNN's. One used standard convolutions, and the other used depthwise separable convolutions. Depthwise separable convolutions are a different operation, similar to regular convolutions, but with the aim to reduce number of parameters and, especially, number of operations. They do so by breaking up the channels of the input image, them performing a single convolution on each channel. Them, they recombine the resulting filtered images, and apply *N* regular convolutions, of size 1x1. This is best represented by image 2.
@@ -229,7 +229,7 @@ We used 2 different versions of our CNN's. One used standard convolutions, and t
 *Image 2 - Depthwise Separable Convolution Representation. [Original Source of the Image](https://towardsdatascience.com/review-mobilenetv1-depthwise-separable-convolution-light-weight-model-a382df364b69)*
 
 #### *Intersection Over Union*
-To evaluate our models, we decided top use the intersection-over-union metric. It works by dividing the area of the intersection of the two bounding boxes by the are of their union.
+To evaluate our models, we decided top use the intersection-over-union metric. It works by dividing the area of the intersection of the two bounding boxes by the area of their union.
 
 <img src="./sample_imgs/iou.png" width="300" height="234"></img>
 
@@ -254,7 +254,7 @@ With the face segmented, we need to generate a feature vector capable of differe
 
 This CNN was originally trained on a classical classification problem, having to classify to whom, in a set of 2622 people, an image belonged. As such, we can't use it directly. To use it, we get the output of the last layer before the classification layer, and use it as an feature extractor.
 
-#### *Triple Loss*
+#### *Triplet Loss*
 To fine tune the feature extraction, we trained the extractor using the triplet loss. Here is its equation:
 
 <img src="./sample_imgs/triplet_formula.svg" width="400" height="100"></img>
