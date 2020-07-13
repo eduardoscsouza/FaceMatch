@@ -338,6 +338,8 @@ For the segmentation, we had 4 final models, in a combination of being trained u
 
 With regards to the verification aspect of the project, our final models showed good performance, but could be better, with the euclidian distance model showing better performance. We focused more on the former aspect of the project, so our verification is not as refined. One major improvement would be define the distance threshold in a more sophisticated way. They way we are currently doing doesn't take in consideration the distance distribution as a whole, just the mean. Still the verification works quite well. One notable failure is with oclusion, as shown in the images below.
 
+One major block in our project, specially for the verification part, was training time. We had many different models, and each one took very long to train and evaluate. The euclidian distance triplet model, for example, took more than 24 hours to train. As such, with more available time we would be able to do more experimentation and achieve better results.
+
 
 
 ## **Sample Code and Results**
@@ -356,17 +358,18 @@ With regards to the verification aspect of the project, our final models showed 
 
 <img src="./sample_imgs/fail_easy.png" height="350" width="400"></img>
 
-*Image 12.1 - Unsuccesful Verification with little occlusion*
+*Image 12.1 - Unsuccesful Verification with Little Occlusion*
 
 <img src="./sample_imgs/fail_hard.png" height="350" width="400"></img>
 
-*Image 12.2 - Unsuccesful Verification with high occlusion*
+*Image 12.2 - Unsuccesful Verification with High Occlusion*
 
 
 This images were extracted using [this jupyter notebook](./sample_code/FinalReportDemonstration.ipynb). It is a sample where our models are run using a webcam as input. For it to work, the environment defined in [env.yml](./env.yml) should be installed, using conda.
 
 All trained models are available at our [Google Drive](https://drive.google.com/drive/folders/1R3cb0nj81Y21L5N6LgH9R_AdeinWRQHC?usp=sharing) (the files were too big to add to this repository). All the metrics csv's are available at [experiments/results](./experiments/results).
 
+All the metrics obtained during training are visible through tensorboard, at [experiments/tensorboard_logs](./experiments/tensorboard_logs). [This jupyter notebook](./sample_code/TensorBoardDemonstration.ipynb) has the graphs already loaded.
 
 
 ## **Members Tasks**
