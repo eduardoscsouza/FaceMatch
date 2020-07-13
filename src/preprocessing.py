@@ -10,29 +10,37 @@ from utils import normalize
 
 # Applies convolution on a grayscaled image with given kernel with FFT
 def __convFFT__(image, kernel):
+    # Applying FFT on kernel and image
     kernel_t = np.fft.fft2(kernel, s=(image.shape[:2]), axes=(0, 1))
     image_t = np.fft.fft2(image, axes=(0, 1))
 
+    # Multiplying transformed matrices
     image_t = image_t * kernel_t[:, :]
+
+    # Applying inverse FFT
     image_t = np.fft.ifft2(image_t, axes=(0, 1)).real
 
     return image_t
 
 def __gaussianFilter__(image):
+    # Creating filter
     t = np.linspace(-10, 10, 30)
     bump = np.exp(-0.1*t**2)
     bump /= np.trapz(bump)
     kernel = bump[:, np.newaxis] * bump[np.newaxis, :]
 
+    # Applying filter with FFT
     image_t = __convFFT__(image, kernel)
     image_t = normalize(image_t)
 
     return image_t
 
 def __sobelFilter__(image):
+    # Creating filter
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
     Ky = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], np.float32)
 
+    # Applying filter with FFT
     Ix = __convFFT__(image, Kx)
     Iy = __convFFT__(image, Ky)
 
@@ -111,6 +119,7 @@ def __hysteresis__(img, weak, strong=255):
     return img
 
 def cannyEdgeDetection(image):
+    # Applying steps to calculate Canny Edge Detector
     image_f = __gaussianFilter__(image)
     image_f, theta = __sobelFilter__(image_f)
     image_f = __non_max_suppression__(image_f, theta)

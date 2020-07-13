@@ -47,16 +47,12 @@ Returns the upper-left and lower-right coordinates of the face
 using our CNN solution.
 """
 def __getBoundingBoxCNN__(image):
+    # Resizes image and divide values by 255 to fit the model
     aux_image = cv2.cvtColor(cv2.resize(image, (112, 112), interpolation=cv2.INTER_CUBIC), cv2.COLOR_BGR2RGB)
     aux_image = (aux_image/255.0)[np.newaxis, :, :, :]
+
+    # Prediction
     x1, y1, width, height = model.predict(aux_image)[0]
-
-    """
-    x_up_left, y_up_left = int(image.shape[1]*x1), int(image.shape[0]*y1)
-    x_down_right, y_down_right = int(image.shape[1]*(x1+width)), int(image.shape[0]*(y1+height))
-
-    return (x_up_left, y_up_left, x_down_right, y_down_right)
-    """
 
     return (x1, y1, x1+width, y1+height)
 
@@ -91,6 +87,7 @@ one of the methods, that are passed as parameter.
 def getBoundingBoxesOfImages(get_bbox_method, images_paths):
     bounding_boxes = []
 
+    # Iterate over images and call method to calculate bbox
     for ip in images_paths:
         image = cv2.imread(ip)
         bbox = get_bbox_method(image)
@@ -103,8 +100,13 @@ Returns the running time to get all bounding boxes of images
 on image_paths using one of the methods, that are passed as parameter.
 """
 def getRunningTimeForImages(get_bbox_method, images_paths):
+    # Save initial time
     begin_time = datetime.datetime.now()
+
+    # Get all bboxes
     getBoundingBoxesOfImages(get_bbox_method, images_paths)
+
+    # Save end time
     end_time = datetime.datetime.now()
 
     return (end_time - begin_time)
@@ -118,6 +120,7 @@ def getIouMean(bboxesA, bboxesB):
     mean = 0
     cnt = 0
 
+    # Iterating over bboxes, adding IoU if both bboxes exist
     for i in range(len(bboxesA)):
         if (bboxesA[i] != (-1, -1, -1, -1) and bboxesB[i] != (-1, -1, -1, -1)):
             iou = __bb_intersection_over_union__(bboxesA[i], bboxesB[i])
@@ -134,6 +137,7 @@ def getMAE(bboxesA, bboxesB):
     mean = 0
     cnt = 0
 
+    # Iterating over bboxes, adding difference between all coordinates
     for i in range(len(bboxesA)):
         if (bboxesA[i] != (-1, -1, -1, -1) and bboxesB[i] != (-1, -1, -1, -1)):
             error = np.sum(np.abs(np.array(bboxesA[i]) - np.array(bboxesB[i])))

@@ -14,16 +14,20 @@ with edge.
 def translate_face_randomly(img, bbox):
     rows, cols = img.shape[:2]
 
+    # Randomly get translation distance, without taking bbox out of image
     tx = random.uniform(-bbox[0]*cols, cols-bbox[2]*cols)
     ty = random.uniform(-bbox[1]*rows, rows-bbox[3]*rows)
 
     tx = int(tx)
     ty = int(ty)
 
+    # Calculating translation matrix
     M = np.float32([[1, 0, tx], [0, 1, ty]])
 
+    # Applying warp affine with translation matrix
     img = cv2.warpAffine(img, M, (cols, rows))
 
+    # Determining how to cut the images and then paddign with mode 'edge'
     if (ty >= 0):
         if (tx >= 0):
             img = img[ty:, tx:]
@@ -39,6 +43,7 @@ def translate_face_randomly(img, bbox):
             img = img[:rows+ty, :cols+tx]
             img = np.stack([np.pad(img[:,:,c], ((0, np.abs(ty)), (0, np.abs(tx))), mode='edge') for c in range(3)], axis=2)
     
+    # Getting bbox coordinates
     x1 = (bbox[0]*cols + tx)/cols
     y1 = (bbox[1]*rows + ty)/rows
     x2 = (bbox[2]*cols + tx)/cols
@@ -54,23 +59,30 @@ Rotates images randomly on the interval [-45 degrees, 45 degrees].
 def rotate_face_randomly(img, bbox):
     rows, cols = img.shape[:2]
 
+    # Getting center of bbox
     cx = (cols*bbox[0] + cols*bbox[2]) / 2
     cy = (rows*bbox[1] + rows*bbox[3]) / 2
 
+    # Randomly getting the rotation angle on [-45, 45] and creating
+    # rotation matrix
     M = cv2.getRotationMatrix2D((cx, cy), random.uniform(-45, 45), 1) 
 
+    # Applying rotation matrix with warp affine
     img = cv2.warpAffine(img, M, (cols, rows))
 
+    # Putting points in correct format to use matmul on bbox's points
     p1 = [[bbox[0]*cols], [bbox[1]*rows], [1]]
     p2 = [[bbox[2]*cols], [bbox[1]*rows], [1]]
     p3 = [[bbox[0]*cols], [bbox[3]*rows], [1]]
     p4 = [[bbox[2]*cols], [bbox[3]*rows], [1]]
 
+    # Calculating new bboxes coordinates
     p1 = np.matmul(M, p1).flatten().astype(int)
     p2 = np.matmul(M, p2).flatten().astype(int)
     p3 = np.matmul(M, p3).flatten().astype(int)
     p4 = np.matmul(M, p4).flatten().astype(int)
 
+    # Getting minimum rectangle that covers rotated rectangle
     mn_x = min(p1[0], p2[0], p3[0], p4[0])/rows
     mn_y = min(p1[1], p2[1], p3[0], p4[0])/cols
     mx_x = max(p1[0], p2[0], p3[0], p4[0])/rows
@@ -88,7 +100,10 @@ Apply some transformation on a set of images and bounding boxes.
     and also get an image and a bounding box as return
 """
 def apply_transformation_to_images(images, bboxes, transformation):
+    # Applying transformation to all images/bboxes
     imgs_bboxes = np.array([transformation(img, bbox) for img, bbox in zip(images, bboxes)])
+
+    # Separating images from bboxes
     images = imgs_bboxes[:, 0]
     bboxes = imgs_bboxes[:, 1]
     return images, bboxes
