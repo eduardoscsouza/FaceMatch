@@ -75,11 +75,19 @@ def rotate_face_randomly(img, bbox):
     mn_y = min(p1[1], p2[1], p3[0], p4[0])/cols
     mx_x = max(p1[0], p2[0], p3[0], p4[0])/rows
     mx_y = max(p1[1], p2[1], p3[1], p4[1])/cols
+<<<<<<< Updated upstream
 
     bbox = np.array([mn_x, mn_y, mx_x, mx_y])
 
     return img, bbox
 
+=======
+
+    bbox = np.array([mn_x, mn_y, mx_x, mx_y])
+
+    return img, bbox
+
+>>>>>>> Stashed changes
 """
 Apply some transformation on a set of images and bounding boxes.
 - 'images' and 'bboxes' must have the same size
@@ -93,6 +101,7 @@ def apply_transformation_to_images(images, bboxes, transformation):
     bboxes = imgs_bboxes[:, 1]
     return images, bboxes
 
+<<<<<<< Updated upstream
 
 """
 Example of usage:
@@ -102,19 +111,31 @@ img3 bbox = [0.432,0.2099644128113879,0.614,0.6583629893238434]
 
 img = cv2.imread('../sample_imgs/raw/000003.jpg')
 bbox = [0.432,0.2099644128113879,0.614,0.6583629893238434]
+=======
+>>>>>>> Stashed changes
 
+"""
+Example of usage:
+img1 bbox = [0.23227383863080683,0.10334788937409024,0.784841075794621,0.5589519650655022]
+img2 bbox = [0.1702127659574468,0.15824915824915825,0.6926713947990544,0.6734006734006734]
+img3 bbox = [0.432,0.2099644128113879,0.614,0.6583629893238434]
+img = cv2.imread('../sample_imgs/raw/000003.jpg')
+bbox = [0.432,0.2099644128113879,0.614,0.6583629893238434]
 imgs = np.expand_dims(img, axis=0)
 bboxes = np.expand_dims(bbox, axis=0)
-
 imgs = np.concatenate((imgs, imgs))
 bboxes = np.concatenate((bboxes, bboxes))
-
 imgs, bboxes = apply_transformation_to_images(imgs, bboxes, translate_face_randomly)
+<<<<<<< Updated upstream
 
 rows, cols, _ = imgs[0].shape
 
 imgs[0] = cv2.rectangle(imgs[0], (int(bboxes[0][0]*cols), int(bboxes[0][1]*rows)), (int(bboxes[0][2]*cols), int(bboxes[0][3]*rows)), (255, 0, 0), 2)
 
+=======
+rows, cols, _ = imgs[0].shape
+imgs[0] = cv2.rectangle(imgs[0], (int(bboxes[0][0]*cols), int(bboxes[0][1]*rows)), (int(bboxes[0][2]*cols), int(bboxes[0][3]*rows)), (255, 0, 0), 2)
+>>>>>>> Stashed changes
 cv2.imshow('bla', imgs[0])
 cv2.waitKey()
 """
