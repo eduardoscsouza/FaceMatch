@@ -178,6 +178,8 @@ Example:
 
 <img src="https://i.ibb.co/fnch6V6/2.png" width="210" height="300" /> <img src="https://i.ibb.co/CQzzPnM/000002.jpg" width="210" height="300" />
 
+More examples can be found at this [link](https://github.com/eduardoscsouza/FaceMatch/blob/master/sample_code/DataAugmentationTranslation.ipynb).
+
 
 ### **3. Face Segmentation**
 
