@@ -90,7 +90,7 @@ class BBoxsGenerator(Sequence):
                 batch_size=32,
                 out_dtype=np.float32, out_color='rgb',
                 resize=False, out_image_size=(56, 56), cv2_inter=cv2.INTER_LINEAR,
-                preprocess_func=normalize_255):
+                preprocess_func=normalize_255, preprocess_include_label=False):
         self.imgs = np.asarray([os.path.join(imgs_dir, img) for img in bboxs_df.iloc[:, 0]])
         self.labels = np.asarray(bboxs_df.iloc[:, 1:], dtype=np.float64 if (out_dtype==np.float64) else np.float32)
         self.__aux_len__ = len(self.imgs)
@@ -102,6 +102,7 @@ class BBoxsGenerator(Sequence):
         self.batch_size = batch_size
         self.out_dtype = out_dtype
         self.preprocess_func = preprocess_func
+        self.preprocess_include_label = preprocess_include_label
 
     def __len__(self):
         return self.__len_out__
@@ -111,9 +112,12 @@ class BBoxsGenerator(Sequence):
 
         batch_imgs = [__load_img__(img, *self.__load_img_args__) for img in self.imgs[cut]]
         batch_imgs = np.stack(batch_imgs, axis=0).astype(self.out_dtype)
-        batch_imgs = batch_imgs if self.preprocess_func is None else self.preprocess_func(batch_imgs)
-
         batch_labels = self.labels[cut]
+
+        if self.preprocess_include_label:
+            batch_imgs, batch_labels = (batch_imgs, batch_labels) if self.preprocess_func is None else self.preprocess_func(batch_imgs, batch_labels)
+        else:
+            batch_imgs = batch_imgs if self.preprocess_func is None else self.preprocess_func(batch_imgs)
 
         return batch_imgs, batch_labels
 
