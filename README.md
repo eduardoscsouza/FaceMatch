@@ -163,7 +163,7 @@ We decided to use the [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
 
 
 
-## **Steps**
+## **Steps With Results**
 
 ### **1. Dataset Filtering and Preprocessing**
 We reorganized and reformated the original dataset to better suit our needs and improve usability. Importantly, for the face verification algorithm, we only used individuals with more than 5 images of them in the dataset. Also, for the bounding box annotation, we changed the way the data is represented. Originally, the data is given as the coordinates of the upper-left point of the bounding box, and the width and height of the bounding box. We changed it to the coordinates of the upper-left point and the bootom-right point of the bounding box. This resulted in better metrics.
@@ -273,13 +273,45 @@ The distance function in this sceneario is the euclidian distance. We used as di
 
 *Image 8 - Euclidian Distance Triplet over training. Blue line is validation data, and orange is training*
 
+|Set  |Pos Dist Mean     |Neg Dist Mean     |Triplet Loss Mean |
+|-----|------------------|------------------|------------------|
+|Train|0.5728581547737122|1.745187759399414 |0.22523514926433563|
+|Val  |0.6698782444000244|1.7403087615966797|0.2757253348827362|
+
+*Table 5 - Distances Using The Euclidian Distance*
+
 <img src="./sample_imgs/triplet-cos.svg" height="350"></img>
 
 *Image 9 - Cossine Distance Triplet over training. Green line is validation data, and pink is training*
 
+|Set  |Pos Dist Mean     |Neg Dist Mean     |Triplet Loss Mean|
+|-----|------------------|------------------|-----------------|
+|Train|0.445333868265152 |0.8501749038696289|0.595158576965332|
+|Val  |0.4381791949272156|0.8464183807373047|0.59176105260849 |
+
+*Table 6 - Distances Using The Cossine Distance*
+
 
 
 ### **5. Face Verification**
+After training the feature extractor with the triplet loss, we simply set the average of the mean positive distances and the mean negative distances as a threshold. If two vectors have a distance smaller than the threshold, they are considered as belonging to the same person, and to different people otherwise.
+We used this as a classifier and extracted some metrics.
+
+|Set  |Binary Accuracy   |Precision         |Recall            |True Negatives|False Positives|False Negatives|True Positives|
+|-----|------------------|------------------|------------------|--------------|---------------|---------------|--------------|
+|Train|0.8604687452316284|0.871737003326416 |0.8453124761581421|14010.0       |1990.0         |2475.0         |13525.0       |
+|Val  |0.8305624723434448|0.8596084117889404|0.7892890572547913|13977.0       |2058.0         |3364.0         |12601.0       |
+
+*Table 7 - Classifier Using The Euclidian Distance*
+
+|Set  |Binary Accuracy   |Precision         |Recall            |True Negatives|False Positives|False Negatives|True Positives|
+|-----|------------------|------------------|------------------|--------------|---------------|---------------|--------------|
+|Train|0.7213125228881836|0.7808796763420105|0.6143545508384705|13264.0       |2755.0         |6163.0         |9818.0        |
+|Val  |0.722406268119812 |0.77568119764328  |0.6221036314964294|13210.0       |2865.0         |6018.0         |9907.0        |
+
+*Table 8 - Classifier Using The Cossine Distance*
+
+
 
 ## **Code and Results**
 
