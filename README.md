@@ -7,7 +7,8 @@ Final project for **SCC0251/SCC5830 - Image Processing - 1st Semester of 2020** 
  - Eduardo Santos Carlos de Souza (Master's student, NUSP 9293481)
  - Guilherme Hideo Tubone (Master's student, NUSP 9019403)
 
-
+## **Presentation video**
+[Youtube Link](https://youtu.be/J2T3dMgmDSU)
 
 ## **Abstract**
 This project aims to build a system capable of, given two images, determine if both have the face of the same person or different people in them, known as the face verification problem. It uses image segmentation to separate the faces from the rest of the images, and image classification to determine whether the cropped faces belong to the same person. The images used are of photographic images of people, where their faces are visible, from the CelebA dataset. Possible applications revolve around security, where it is needed to verify someone's identity by an image of them, such as unlocking a phone and many surveillance systems.
