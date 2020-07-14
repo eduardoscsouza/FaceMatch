@@ -4,8 +4,8 @@ Final project for **SCC0251/SCC5830 - Image Processing - 1st Semester of 2020** 
 
 
 ## **Authors**
- - Eduardo Santos Carlos de Souza (NUSP 9293481)
- - Guilherme Hideo Tubone (NUSP 9019403)
+ - Eduardo Santos Carlos de Souza (Master's student, NUSP 9293481)
+ - Guilherme Hideo Tubone (Master's student, NUSP 9019403)
 
 
 
