@@ -408,6 +408,8 @@ One major block in our project, especially for the verification part, was traini
 
 These images were extracted using [this jupyter notebook](./sample_code/FinalReportDemonstration.ipynb). It is a sample where our models are run using a webcam as input. For the notebook to work, the environment defined in [env.yml](./env.yml) must be installed, using conda, and the trained models must be downloaded separately.
 
+We also developed a very simple [sample jupyter notebook](./sample_code/FinalReportSimpleExample.ipynb), just executing our models on a few images present on this README. Same as the previous one, the environment in [env.yml](./env.yml) must be installed, and the trained models must be downloaded.
+
 All trained models are available at our [Google Drive](https://drive.google.com/drive/folders/1R3cb0nj81Y21L5N6LgH9R_AdeinWRQHC?usp=sharing) (the files were too big to add to this repository). All the metrics CSV's are available at [experiments/results](./experiments/results).
 
 All the metrics obtained during training are visible through tensorboard, at [experiments/tensorboard_logs](./experiments/tensorboard_logs). [This jupyter notebook](./sample_code/TensorBoardDemonstration.ipynb) has the graphs already loaded.
