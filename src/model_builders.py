@@ -148,6 +148,54 @@ def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights
 
         return extractor_model
 
+def build_vgg16_separable_feature_extractor(vgg_weights_filepath=None, extraction_layer_indx=3, name="vgg16_face_extractor"):
+    with tf.name_scope(name) as scope:
+        model_in = Input(shape=(224, 224, 3), name="input")
+
+        model = SeparableConv2D(64, (3, 3), padding='same', activation='relu', name="block-0_conv_0")(model_in)
+        model = SeparableConv2D(64, (3, 3), padding='same', activation='relu', name="block-0_conv_1")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-0_pool")(model)
+
+        model = SeparableConv2D(128, (3, 3), padding='same', activation='relu', name="block-1_conv_0")(model)
+        model = SeparableConv2D(128, (3, 3), padding='same', activation='relu', name="block-1_conv_1")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-1_pool")(model)
+
+        model = SeparableConv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_0")(model)
+        model = SeparableConv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_1")(model)
+        model = SeparableConv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_2")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-2_pool")(model)
+
+        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_0")(model)
+        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_1")(model)
+        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_2")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-3_pool")(model)
+
+        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_0")(model)
+        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_1")(model)
+        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_2")(model)
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-4_pool")(model)
+        model = Flatten()(model)
+
+        model_dense_0 = Dense(4096, activation=None, name="dense-0")(model)
+        model_actv_0 = Activation('relu', name="dense-0_actv")(model_dense_0)
+        model_drop_0 = Dropout(0.5, name="dense-0_drop")(model_actv_0)
+
+        model_dense_1 = Dense(4096, activation=None, name="dense-1")(model_drop_0)
+        model_actv_1 = Activation('relu', name="dense-1_actv")(model_dense_1)
+        model_drop_1 = Dropout(0.5, name="dense-1_drop")(model_actv_1)
+
+        model_dense_2 = Dense(2622, activation=None, name="dense-2")(model_drop_1)
+        model_actv_2 = Activation('softmax', name="dense-2_actv")(model_dense_2)
+
+        vgg_model = Model(model_in, model_actv_2)
+        if vgg_weights_filepath is not None:
+            vgg_model.load_weights(vgg_weights_filepath)
+
+        extraction_layer = [model_dense_0, model_actv_0, model_dense_1, model_actv_1, model_dense_2, model_actv_2][extraction_layer_indx]
+        extractor_model = Model(model_in, extraction_layer, name=scope)
+
+        return extractor_model
+
 
 
 # Layer that normalized a vector
@@ -165,8 +213,12 @@ def add_l2_norm(extractor_model):
         l2_norm = L2Normalization(name="l2_normalization")(extractor_model.output)
         return Model(extractor_model.input, l2_norm, name=scope)
 
-def build_vgg16_triplet_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor"):
-    extractor_model = build_vgg16_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx, name=name)
+def build_vgg16_triplet_extractor(vgg_weights_filepath="../data/vgg_face_weights.h5", extraction_layer_indx=3, name="vgg16_face_extractor", separable=False):
+    if not separable:
+        extractor_model = build_vgg16_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx, name=name)
+    else:
+        extractor_model = build_vgg16_separable_feature_extractor(vgg_weights_filepath=vgg_weights_filepath, extraction_layer_indx=extraction_layer_indx, name=name)
+
     return add_l2_norm(extractor_model)
 
 # Prepares a extractor model to be trained using the Triplet Loss
