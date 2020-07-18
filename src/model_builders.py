@@ -139,7 +139,8 @@ def build_vgg16_feature_extractor(vgg_weights_filepath="../data/vgg_face_weights
         model_actv_2 = Activation('softmax', name="dense-2_actv")(model_dense_2)
 
         vgg_model = Model(model_in, model_actv_2)
-        vgg_model.load_weights(vgg_weights_filepath)
+        if vgg_weights_filepath is not None:
+            vgg_model.load_weights(vgg_weights_filepath)
 
         extraction_layer = [model_dense_0, model_actv_0, model_dense_1, model_actv_1, model_dense_2, model_actv_2][extraction_layer_indx]
         extraction_layer = Flatten(name="extract_flat")(extraction_layer)
