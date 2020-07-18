@@ -8,7 +8,7 @@ gpus = tf.config.list_physical_devices(device_type='GPU')
 for gpu in gpus:
     try:
         #tf.config.experimental.set_memory_growth(gpu, True)
-        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6000)])
+        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6500)])
     except RuntimeError as e:
         print(e)
 
@@ -52,12 +52,12 @@ gen_args = dict(min_indv_imgs=5, imgs_dir=imgs_dir,
                 batch_n_indvs=4, batch_indv_n_imgs=4,
                 out_dtype=np.float32, out_color='rgb',
                 resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
-                preprocess_func=vgg16.preprocess_input)
+                preprocess_func=normalize_255)
 eval_gen_args = dict(min_indv_imgs=5, imgs_dir=imgs_dir,
                     batch_size=16,
                     out_dtype=np.float32, out_color='rgb',
                     resize=False, out_image_size=(224, 224), cv2_inter=cv2.INTER_LINEAR,
-                    preprocess_func=vgg16.preprocess_input)
+                    preprocess_func=normalize_255)
 
 for dist in ['eucl', 'cos']:
     exp_name = "dist-{}".format(dist)

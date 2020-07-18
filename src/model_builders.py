@@ -1,8 +1,8 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten
-from tensorflow.keras.layers import Input, Lambda, Layer, MaxPooling2D, SeparableConv2D
+from tensorflow.keras.layers import Activation, BatchNormalization, Conv2D, Dense, Dropout, Flatten
+from tensorflow.keras.layers import Input, Lambda, Layer, LeakyReLU, MaxPooling2D, SeparableConv2D
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanAbsoluteError
 from tensorflow.keras.metrics import BinaryAccuracy, Precision, Recall
@@ -152,30 +152,69 @@ def build_vgg16_separable_feature_extractor(vgg_weights_filepath=None, extractio
     with tf.name_scope(name) as scope:
         model_in = Input(shape=(224, 224, 3), name="input")
 
-        model = SeparableConv2D(64, (3, 3), padding='same', activation='relu', name="block-0_conv_0")(model_in)
-        model = SeparableConv2D(64, (3, 3), padding='same', activation='relu', name="block-0_conv_1")(model)
+        model = SeparableConv2D(64, (3, 3), padding='same', activation=None, name="block-0_conv_0")(model_in)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(64, (3, 3), padding='same', activation=None, name="block-0_conv_1")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
         model = MaxPooling2D((2, 2), strides=(2, 2), name="block-0_pool")(model)
 
-        model = SeparableConv2D(128, (3, 3), padding='same', activation='relu', name="block-1_conv_0")(model)
-        model = SeparableConv2D(128, (3, 3), padding='same', activation='relu', name="block-1_conv_1")(model)
+        model = SeparableConv2D(128, (3, 3), padding='same', activation=None, name="block-1_conv_0")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(128, (3, 3), padding='same', activation=None, name="block-1_conv_1")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
         model = MaxPooling2D((2, 2), strides=(2, 2), name="block-1_pool")(model)
 
-        model = SeparableConv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_0")(model)
-        model = SeparableConv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_1")(model)
-        model = SeparableConv2D(256, (3, 3), padding='same', activation='relu', name="block-2_conv_2")(model)
+        model = SeparableConv2D(256, (3, 3), padding='same', activation=None, name="block-2_conv_0")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(256, (3, 3), padding='same', activation=None, name="block-2_conv_1")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(256, (3, 3), padding='same', activation=None, name="block-2_conv_2")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
         model = MaxPooling2D((2, 2), strides=(2, 2), name="block-2_pool")(model)
 
-        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_0")(model)
-        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_1")(model)
-        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-3_conv_2")(model)
+        model = SeparableConv2D(512, (3, 3), padding='same', activation=None, name="block-3_conv_0")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(512, (3, 3), padding='same', activation=None, name="block-3_conv_1")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(512, (3, 3), padding='same', activation=None, name="block-3_conv_2")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
         model = MaxPooling2D((2, 2), strides=(2, 2), name="block-3_pool")(model)
 
-        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_0")(model)
-        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_1")(model)
-        model = SeparableConv2D(512, (3, 3), padding='same', activation='relu', name="block-4_conv_2")(model)
-        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-4_pool")(model)
-        model = Flatten()(model)
+        model = SeparableConv2D(512, (3, 3), padding='same', activation=None, name="block-4_conv_0")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
 
+        model = SeparableConv2D(512, (3, 3), padding='same', activation=None, name="block-4_conv_1")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = SeparableConv2D(512, (3, 3), padding='same', activation=None, name="block-4_conv_2")(model)
+        model = BatchNormalization()(model)
+        model = LeakyReLU()(model)
+
+        model = MaxPooling2D((2, 2), strides=(2, 2), name="block-4_pool")(model)
+
+        model = Flatten()(model)
         model_dense_0 = Dense(4096, activation=None, name="dense-0")(model)
         model_actv_0 = Activation('relu', name="dense-0_actv")(model_dense_0)
         model_drop_0 = Dropout(0.5, name="dense-0_drop")(model_actv_0)
