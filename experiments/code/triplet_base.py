@@ -108,7 +108,8 @@ for dist in ['eucl', 'cos']:
                         class_train_datagen=class_train_datagen, class_val_datagen=class_val_datagen,
                         dist_type=dist, alpha=1.0,
                         results_dir=results_dir,
-                        evaluation_steps=2000, generator_queue_size=20, generator_workers=4, use_multiprocessing=False)
+                        evaluation_steps=2000, generator_queue_size=20, generator_workers=4, use_multiprocessing=False,
+                        distrib_batch_size=500, distrib_bins=50000)
 
         del dist_train_datagen, dist_val_datagen
         del class_train_datagen, class_val_datagen
