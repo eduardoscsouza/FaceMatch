@@ -8,7 +8,7 @@ gpus = tf.config.list_physical_devices(device_type='GPU')
 for gpu in gpus:
     try:
         #tf.config.experimental.set_memory_growth(gpu, True)
-        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6500)])
+        tf.config.set_logical_device_configuration(gpu, [tf.config.LogicalDeviceConfiguration(memory_limit=6000)])
     except RuntimeError as e:
         print(e)
 
@@ -64,12 +64,10 @@ for dist in ['eucl', 'cos']:
     aux_exp_dir = os.path.join(results_dir, exp_name)
     aux_tensorboard_dir = os.path.join(tensorboard_dir, exp_name)
     if not os.path.isfile(os.path.join(aux_exp_dir, "metrics.csv")):
-        '''
         if os.path.isdir(aux_exp_dir):
             shutil.rmtree(aux_exp_dir)
         if os.path.isdir(aux_tensorboard_dir):
             shutil.rmtree(aux_tensorboard_dir)
-        '''
 
         train_datagen = TripletTrainGenerator(train_df, **gen_args)
         val_datagen = TripletTrainGenerator(val_df, **gen_args)
@@ -93,7 +91,7 @@ for dist in ['eucl', 'cos']:
 
         tf.keras.backend.clear_session()
         gc.collect()
-    '''
+
     if ( os.path.isfile(os.path.join(aux_exp_dir, "metrics.csv")) and
     (not os.path.isfile(os.path.join(aux_exp_dir, "classifier_metrics.csv"))) ):
         vgg16_extractor = load_model(os.path.join(aux_exp_dir, "best_model.h5"), compile=False,
@@ -110,11 +108,11 @@ for dist in ['eucl', 'cos']:
                         class_train_datagen=class_train_datagen, class_val_datagen=class_val_datagen,
                         dist_type=dist, alpha=1.0,
                         results_dir=results_dir,
-                        evaluation_steps=2000, generator_queue_size=20, generator_workers=4, use_multiprocessing=False)
+                        evaluation_steps=2000, generator_queue_size=20, generator_workers=4, use_multiprocessing=False,
+                        distrib_batch_size=500, distrib_bins=50000)
 
         del dist_train_datagen, dist_val_datagen
         del class_train_datagen, class_val_datagen
         del vgg16_extractor
         tf.keras.backend.clear_session()
         gc.collect()
-    '''

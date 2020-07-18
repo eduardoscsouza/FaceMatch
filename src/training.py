@@ -1,6 +1,8 @@
 from model_builders import build_triplet_distances_model, build_triplet_classifier_model
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
 import pandas as pd
+import numpy as np
 import os
 import gc
 
@@ -116,6 +118,55 @@ def run_experiment(model, exp_name, train_datagen, val_datagen,
 
 
 
+def __get_dists_distrib__(model, datagen,
+                        evaluation_steps=2000, generator_queue_size=15, generator_workers=1, use_multiprocessing=True,
+                        distrib_batch_size=500):
+
+    total_samples = evaluation_steps * datagen.batch_size
+    batches_starts = list(range(0, evaluation_steps, distrib_batch_size)) + [evaluation_steps]
+    cut_batches_starts = np.asarray(batches_starts) * datagen.batch_size
+
+    tripl, pos, neg = [np.zeros((total_samples,), dtype=np.float32) for _ in range(3)]
+    for i in range(len(batches_starts) - 1):
+        cur_cut = slice(cut_batches_starts[i], cut_batches_starts[i+1])
+        cur_batches = batches_starts[i+1] - batches_starts[i]
+        cur_out = model.predict(datagen, steps=cur_batches, callbacks=None,
+                                max_queue_size=generator_queue_size, workers=generator_workers, use_multiprocessing=use_multiprocessing,
+                                verbose=False)
+        tripl[cur_cut], pos[cur_cut], neg[cur_cut] = cur_out[0][:, 0], cur_out[1][:, 0], cur_out[2][:, 0]
+
+    df = pd.DataFrame.from_dict(data={"Triplet Loss Mean":[np.mean(tripl)], "Triplet Loss Std":[np.std(tripl)],
+                                    "Pos Dist Mean":[np.mean(pos)], "Pos Dist Std":[np.std(pos)],
+                                    "Neg Dist Mean":[np.mean(neg)], "Neg Dist Std":[np.std(neg)]})
+
+    return df, tripl, pos, neg
+
+def __get_best_threshold__(pos, neg, distrib_bins=50000):
+    pos, neg = np.sort(pos), np.sort(neg)
+
+    stop = np.amin([np.amax(neg), np.mean(neg)+3*np.std(neg)])
+    thresholds = list(np.linspace(0, stop, num=distrib_bins)) + [stop]
+
+    aux_len = len(neg)
+    corrects = np.asarray([[thre, np.searchsorted(pos, thre) + (aux_len - np.searchsorted(neg, thre))] for thre in thresholds])
+    threshold = corrects[np.argmax(corrects, axis=0)[1], 0]
+
+    return threshold
+
+def __get_classifier_metrics__(pos, neg, threshold):
+    pred = np.concatenate([(pos < threshold), (neg < threshold)], axis=0).astype(np.int32)
+    true = np.concatenate([np.ones(len(pos)), np.zeros(len(neg))], axis=0).astype(np.int32)
+
+    acc = accuracy_score(true, pred)
+    prec = precision_score(true, pred)
+    rec = recall_score(true, pred)
+    tn, fp, fn, tp = confusion_matrix(true, pred).ravel()
+    df = pd.DataFrame.from_dict(data={"Binary Accuracy":[acc], "Precision":[prec], "Recall":[rec],
+                                    "True Negatives":[tn], "False Positives":[fp],
+                                    "False Negatives":[fn], "True Positives":[tp]})
+
+    return df
+
 # Evaluatioan specific for the triplet model
 # Calculates the mean distances, and generates a classifier
 # using those distances to get a threshold for classification
@@ -123,27 +174,28 @@ def evaluate_triplet(extractor_model, exp_name,
                     dist_train_datagen, dist_val_datagen, class_train_datagen, class_val_datagen,
                     dist_type='eucl', alpha=1.0,
                     results_dir="../experiments/results",
-                    evaluation_steps=2000, generator_queue_size=15, generator_workers=1, use_multiprocessing=True):
+                    evaluation_steps=2000, generator_queue_size=15, generator_workers=1, use_multiprocessing=True,
+                    distrib_batch_size=500, distrib_bins=50000):
 
     outfiles_dir = os.path.join(results_dir, exp_name)
     distances_csv_filepath = os.path.join(outfiles_dir, "distances.csv")
     classifier_csv_filepath = os.path.join(outfiles_dir, "classifier_metrics.csv")
     os.makedirs(outfiles_dir, exist_ok=True)
 
-    eval_args = dict(evaluation_steps=evaluation_steps, generator_queue_size=generator_queue_size,
-                    generator_workers=generator_workers, use_multiprocessing=use_multiprocessing)
+    distrib_args = dict(evaluation_steps=evaluation_steps, generator_queue_size=generator_queue_size,
+                    generator_workers=generator_workers, use_multiprocessing=use_multiprocessing,
+                    distrib_batch_size=distrib_batch_size)
 
     model = build_triplet_distances_model(extractor_model, dist_type=dist_type, alpha=alpha, add_loss=False)
-    train_df = get_evaluation_df(model, evaluate_model(model, dist_train_datagen, **eval_args), include_loss=False)
-    val_df = get_evaluation_df(model, evaluate_model(model, dist_val_datagen, **eval_args), include_loss=False)
-    threshold = (train_df["Pos Dist Mean"] + train_df["Neg Dist Mean"]) / 2.0
+    train_df, _, train_pos, train_neg = __get_dists_distrib__(model, dist_train_datagen, **distrib_args)
+    val_df, _, val_pos, val_neg = __get_dists_distrib__(model, dist_val_datagen, **distrib_args)
     combine_train_val_dfs(train_df, val_df).to_csv(distances_csv_filepath, index=False)
     del model, train_df, val_df
     gc.collect()
 
-    model = build_triplet_classifier_model(extractor_model, dist_type=dist_type, threshold=threshold)
-    train_df = get_evaluation_df(model, evaluate_model(model, class_train_datagen, **eval_args), include_loss=False)
-    val_df = get_evaluation_df(model, evaluate_model(model, class_val_datagen, **eval_args), include_loss=False)
+    threshold = __get_best_threshold__(train_pos, train_neg, distrib_bins=distrib_bins)
+    train_df = __get_classifier_metrics__(train_pos, train_neg, threshold)
+    val_df = __get_classifier_metrics__(val_pos, val_neg, threshold)
     combine_train_val_dfs(train_df, val_df).to_csv(classifier_csv_filepath, index=False)
-    del model, train_df, val_df
+    del train_df, val_df
     gc.collect()

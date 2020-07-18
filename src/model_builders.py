@@ -237,7 +237,7 @@ def build_triplet_distances_model(extractor_model, dist_type='eucl', alpha=1.0, 
         neg_dist = EuclidianDistanceSquared(name="neg_dist")([anchor_out, neg_out])
 
     triplet = TripletLoss(alpha=alpha)([pos_dist, neg_dist])
-    triplet_model = Model([anchor_in, pos_in, neg_in], triplet)
+    triplet_model = Model([anchor_in, pos_in, neg_in], [triplet, pos_dist, neg_dist])
     triplet_model.add_metric(pos_dist, aggregation='mean', name="pos_dist_mean")
     triplet_model.add_metric(neg_dist, aggregation='mean', name="neg_dist_mean")
     if add_loss:
