@@ -1,0 +1,3 @@
+Set,Binary Accuracy,Precision,Recall,True Negatives,False Positives,False Negatives,True Positives
+Train,0.78484375,0.7793955370279548,0.79459375,24803,7197,6573,25427
+Val,0.780765625,0.7738258510865259,0.7934375,24579,7421,6610,25390
