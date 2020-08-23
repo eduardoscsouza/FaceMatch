@@ -1,5 +1,7 @@
-# Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,linux
-# Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,visualstudiocode,linux
+# File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
+
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,linux,jupyternotebooks
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,python,linux,jupyternotebooks
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
@@ -83,6 +85,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+pytestdebug.log
 
 # Translations
 *.mo
@@ -103,6 +106,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+doc/_build/
 
 # PyBuilder
 target/
@@ -173,22 +177,22 @@ dmypy.json
 # Ignore all local history of files
 .history
 
-# End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,linux
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,linux,jupyternotebooks
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
 
-### Trained Model Files ###
+### Trained Models Files ###
 *.h5
+
+### VisualStudioCode ###
+# What was in the template wasn't enough
+*/.vscode/*
 
 ### Dataset Files ###
 data/Img
 data/Img_Align
 data/Img_Resize
 data/Img_Crop_Resize
-
-### VisualStudioCode ###
-# What was in the template wasn't enogh
-*.vscode/*
 
 ### Mac Files ###
 .DS_Store
